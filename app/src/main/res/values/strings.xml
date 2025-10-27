@@ -1,0 +1,60 @@
+<resources>
+    <string name="app_name">雅思单词背诵</string>
+    <string name="title_home">首页</string>
+    <string name="title_study">学习</string>
+    <string name="title_review">复习</string>
+    <string name="title_favorites">收藏</string>
+    <string name="title_settings">设置</string>
+    <string name="title_test">测试</string>
+    
+    <!-- Home Fragment -->
+    <string name="daily_goal">每日目标</string>
+    <string name="words_completed">已完成单词</string>
+    <string name="start_studying">开始学习</string>
+    <string name="continue_studying">继续学习</string>
+    <string name="study_progress">学习进度</string>
+    
+    <!-- Study Fragment -->
+    <string name="word_pronunciation">发音</string>
+    <string name="word_definition">释义</string>
+    <string name="word_example">例句</string>
+    <string name="next_word">下一个</string>
+    <string name="previous_word">上一个</string>
+    <string name="add_to_favorites">收藏</string>
+    <string name="remove_from_favorites">取消收藏</string>
+    <string name="start_test">开始测试</string>
+    
+    <!-- Test Fragment -->
+    <string name="test_instruction">请选择正确答案</string>
+    <string name="submit_answer">提交答案</string>
+    <string name="next_question">下一题</string>
+    <string name="test_complete">测试完成</string>
+    <string name="test_score">测试得分</string>
+    <string name="correct_answer">正确答案</string>
+    <string name="your_answer">你的答案</string>
+    
+    <!-- Settings Fragment -->
+    <string name="daily_word_count">每日单词数量</string>
+    <string name="notification_settings">通知设置</string>
+    <string name="study_reminder">学习提醒</string>
+    <string name="data_management">数据管理</string>
+    <string name="export_data">导出数据</string>
+    <string name="import_data">导入数据</string>
+    
+    <!-- Review Fragment -->
+    <string name="select_date">选择日期</string>
+    <string name="review_words">复习单词</string>
+    <string name="no_words_for_date">该日期没有学习记录</string>
+    
+    <!-- Favorites Fragment -->
+    <string name="no_favorites">暂无收藏单词</string>
+    <string name="remove_favorite">移除收藏</string>
+    
+    <!-- Common -->
+    <string name="loading">加载中...</string>
+    <string name="error">错误</string>
+    <string name="retry">重试</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确认</string>
+    <string name="save">保存</string>
+</resources>
