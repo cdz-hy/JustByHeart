@@ -83,6 +83,15 @@ class WordRepository(
         studyRecordDao.updateStudyRecord(studyRecord)
     
     /**
+     * 根据单词ID和日期获取学习记录
+     * @param wordId 单词ID
+     * @param studyDate 学习日期
+     * @return 学习记录对象或null
+     */
+    suspend fun getStudyRecordByWordIdAndDate(wordId: Long, studyDate: Date): StudyRecord? =
+        studyRecordDao.getStudyRecordByWordIdAndDate(wordId, studyDate)
+    
+    /**
      * 获取所有学习日期
      * @return LiveData包装的日期列表
      */
@@ -150,4 +159,8 @@ class WordRepository(
      */
     fun getRecentDailyGoals(): LiveData<List<DailyGoal>> = 
         dailyGoalDao.getRecentDailyGoals()
+
+    suspend fun getMemorizedWordsCount(): Int = studyRecordDao.getMemorizedWordsCount()
+
+    suspend fun getTotalWordsCount(): Int = wordDao.getWordCount()
 }

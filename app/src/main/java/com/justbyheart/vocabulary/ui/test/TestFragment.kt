@@ -47,7 +47,10 @@ class TestFragment : Fragment() {
         
         setupUI()
         observeViewModel()
-        viewModel.startTest()
+
+        // 从导航参数中获取已翻转的单词ID，并开始测试
+        val args = TestFragmentArgs.fromBundle(requireArguments())
+        viewModel.startTest(args.wordIds)
     }
     
     private fun setupUI() {

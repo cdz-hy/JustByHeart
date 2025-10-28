@@ -54,9 +54,16 @@ class StudyFragment : Fragment() {
     }
     
     private fun setupViewPager() {
-        wordAdapter = WordPagerAdapter { word, isFavorite ->
-            viewModel.toggleFavorite(word.id, isFavorite)
-        }
+                // 初始化适配器，并传入两个回调函数：
+                // 1. 点击收藏按钮时的回调
+                // 2. 翻转单词卡片时的回调
+                wordAdapter = WordPagerAdapter({
+                    word, isFavorite ->
+                    viewModel.toggleFavorite(word.id, isFavorite)
+                }, {
+                    wordId ->
+                    viewModel.addFlippedWord(wordId)
+                })
         
         binding.viewPagerWords.adapter = wordAdapter
         binding.viewPagerWords.orientation = ViewPager2.ORIENTATION_HORIZONTAL
@@ -70,8 +77,13 @@ class StudyFragment : Fragment() {
     }
     
     private fun setupUI() {
+        // 设置开始测试按钮的点击事件
         binding.buttonStartTest.setOnClickListener {
-            findNavController().navigate(R.id.testFragment)
+            // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
+            val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
+                viewModel.flippedWords.toLongArray()
+            )
+            findNavController().navigate(action)
         }
         
         binding.buttonPrevious.setOnClickListener {

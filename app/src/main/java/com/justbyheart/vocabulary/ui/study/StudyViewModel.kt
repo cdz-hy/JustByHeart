@@ -46,8 +46,7 @@ class StudyViewModel(
     /**
      * 加载今日学习单词
      * 
-     * 根据今日的学习目标数量，随机获取相应数量的单词，
-     * 并为每个单词创建学习记录。
+     * 根据今日的学习目标数量，获取相应数量的单词，
      */
     fun loadTodayWords() {
         viewModelScope.launch {
@@ -68,7 +67,7 @@ class StudyViewModel(
             // 随机获取指定数量的单词
             val words = repository.getRandomWords(targetCount)
             _todayWords.value = words
-            
+
             // 为每个单词创建学习记录
             words.forEach { word ->
                 val studyRecord = StudyRecord(
@@ -108,6 +107,17 @@ class StudyViewModel(
         }
     }
     
+    // 存储在本次学习中被翻转过的单词ID
+    val flippedWords = mutableSetOf<Long>()
+
+    /**
+     * 添加一个翻转过的单词ID到集合中
+     * @param wordId 被翻转的单词ID
+     */
+    fun addFlippedWord(wordId: Long) {
+        flippedWords.add(wordId)
+    }
+
     /**
      * 标记今日学习为完成状态
      * 

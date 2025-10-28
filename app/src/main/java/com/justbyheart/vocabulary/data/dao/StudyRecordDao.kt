@@ -30,4 +30,10 @@ interface StudyRecordDao {
 
     @Query("SELECT COUNT(*) FROM study_records WHERE studyDate = :date AND isCompleted = 1")
     suspend fun getCompletedWordsCountByDate(date: Date): Int
+
+    @Query("SELECT COUNT(DISTINCT wordId) FROM study_records WHERE isCompleted = 1")
+    suspend fun getMemorizedWordsCount(): Int
+
+    @Query("SELECT * FROM study_records WHERE wordId = :wordId AND studyDate = :studyDate")
+    suspend fun getStudyRecordByWordIdAndDate(wordId: Long, studyDate: Date): StudyRecord?
 }

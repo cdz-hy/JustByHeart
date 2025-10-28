@@ -17,7 +17,8 @@ import com.justbyheart.vocabulary.databinding.JustbyheartWordCardBinding
  * @param onFavoriteClick 收藏按钮点击回调函数
  */
 class WordPagerAdapter(
-    private val onFavoriteClick: (Word, Boolean) -> Unit
+    private val onFavoriteClick: (Word, Boolean) -> Unit,
+    private val onWordFlipped: (Long) -> Unit // 新增：单词卡片被翻转时的回调
 ) : ListAdapter<Word, WordPagerAdapter.WordViewHolder>(WordDiffCallback()) {
 
     private var favoriteWords: Set<Long> = emptySet()
@@ -49,7 +50,7 @@ class WordPagerAdapter(
             parent,
             false
         )
-        return WordViewHolder(binding, onFavoriteClick)
+        return WordViewHolder(binding, onFavoriteClick, onWordFlipped)
     }
 
     /**
@@ -75,7 +76,8 @@ class WordPagerAdapter(
      */
     class WordViewHolder(
         private val binding: JustbyheartWordCardBinding,
-        private val onFavoriteClick: (Word, Boolean) -> Unit
+        private val onFavoriteClick: (Word, Boolean) -> Unit,
+        private val onWordFlipped: (Long) -> Unit // 新增：单词卡片被翻转时的回调
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private var isFavorite: Boolean = false
@@ -105,7 +107,7 @@ class WordPagerAdapter(
 
             // 设置卡片点击事件（用于翻转卡片）
             binding.cardContentLayout.setOnClickListener {
-                flipCard()
+                flipCard(word)
             }
 
             updateFavoriteButton()
@@ -127,11 +129,16 @@ class WordPagerAdapter(
          * 翻转卡片动画
          * 实现卡片正面和背面之间的3D翻转效果
          */
-        private fun flipCard() {
+        private fun flipCard(word: Word) {
             val frontView = binding.frontOfCardGroup
             val backView = binding.backOfCard
 
             val isShowingFront = frontView.visibility == View.VISIBLE
+
+            // 如果当前显示的是正面，则调用回调，将单词ID添加到已翻转列表
+            if (isShowingFront) {
+                onWordFlipped(word.id)
+            }
 
             // 设置摄像机距离以实现3D效果
             val distance = 8000

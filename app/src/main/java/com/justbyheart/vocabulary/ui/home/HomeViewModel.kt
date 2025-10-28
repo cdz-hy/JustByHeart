@@ -42,6 +42,9 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
     // 对外暴露的只读LiveData
     val isLoading: LiveData<Boolean> = _isLoading
     
+    private val _overallProgress = MutableLiveData<Pair<Int, Int>>()
+    val overallProgress: LiveData<Pair<Int, Int>> = _overallProgress
+
     /**
      * 加载今日学习进度
      * 
@@ -77,6 +80,14 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
             }
             
             _isLoading.value = false
+        }
+    }
+    
+    fun loadOverallProgress() {
+        viewModelScope.launch {
+            val memorized = repository.getMemorizedWordsCount()
+            val total = repository.getTotalWordsCount()
+            _overallProgress.postValue(Pair(memorized, total))
         }
     }
 }

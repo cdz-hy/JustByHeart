@@ -52,6 +52,7 @@ class HomeFragment : Fragment() {
         setupUI()
         observeViewModel()
         viewModel.loadTodayProgress()
+        viewModel.loadOverallProgress()
     }
     
     private fun setupUI() {
@@ -92,6 +93,15 @@ class HomeFragment : Fragment() {
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.overallProgress.observe(viewLifecycleOwner) { progress ->
+            val memorized = progress.first
+            val total = progress.second
+            binding.textOverallProgress.text = "$memorized/$total"
+            binding.progressOverall.progress = if (total > 0) {
+                (memorized * 100 / total)
+            } else 0
         }
     }
     
