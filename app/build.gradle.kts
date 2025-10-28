@@ -10,7 +10,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.ielts.vocabulary"
+        applicationId = "com.justbyheart.vocabulary"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -66,14 +66,14 @@ class SettingsFragment : Fragment() {
     private fun setupUI() {
         binding.seekBarDailyWords.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val wordCount = progress + 5 // 最少5个单词
+                val wordCount = progress + 1 // 最少1个单词
                 binding.textDailyWordCount.text = "$wordCount 个单词/天"
             }
             
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                val wordCount = (seekBar?.progress ?: 0) + 5
+                val wordCount = (seekBar?.progress ?: 0) + 1
                 saveDailyWordCount(wordCount)
             }
         })
@@ -85,7 +85,7 @@ class SettingsFragment : Fragment() {
     
     private fun loadSettings() {
         val dailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
-        binding.seekBarDailyWords.progress = dailyWordCount - 5
+        binding.seekBarDailyWords.progress = dailyWordCount - 1
         binding.textDailyWordCount.text = "$dailyWordCount 个单词/天"
     }
     

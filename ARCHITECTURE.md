@@ -1,4 +1,4 @@
-# 雅思核心单词背诵应用 - 架构说明文档
+# 简约背诵 (JustByHeart) - 架构说明文档
 
 ## 📋 目录
 - [项目概述](#项目概述)
@@ -16,7 +16,7 @@
 ## 🎯 项目概述
 
 ### 应用类型
-Android 雅思词汇学习应用，采用现代化 MVVM 架构模式
+Android 英文单词背诵辅助应用，采用现代化 MVVM 架构模式
 
 ### 核心功能模块
 - **学习模块**: 每日单词学习，支持卡片式浏览
@@ -85,7 +85,7 @@ app/
 ├── build/                     # 模块构建输出
 ├── src/main/
 │   ├── assets/               # 静态资源文件
-│   │   └── ielts_words.json  # 雅思词汇数据
+│   │   └── ielts_words.json  # 初始词汇数据 (当前为雅思词库)
 │   ├── java/com/ielts/vocabulary/
 │   │   ├── data/             # 数据层
 │   │   ├── ui/               # UI层
@@ -1035,19 +1035,19 @@ class SettingsFragment : Fragment() {
     private fun setupViews() {
         // 加载当前设置
         val currentWordCount = sharedPreferences.getInt("daily_word_count", 10)
-        binding.seekBarDailyWords.progress = currentWordCount - 5 // SeekBar从0开始，最小值是5
+        binding.seekBarDailyWords.progress = currentWordCount - 1 // SeekBar从0开始，最小值是1
         binding.textWordCount.text = "每日单词数量: $currentWordCount"
         
         binding.seekBarDailyWords.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val wordCount = progress + 5 // 最小值5个单词
+                val wordCount = progress + 1 // 最小值1个单词
                 binding.textWordCount.text = "每日单词数量: $wordCount"
             }
             
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                val wordCount = (seekBar?.progress ?: 0) + 5
+                val wordCount = (seekBar?.progress ?: 0) + 1
                 sharedPreferences.edit()
                     .putInt("daily_word_count", wordCount)
                     .apply()
