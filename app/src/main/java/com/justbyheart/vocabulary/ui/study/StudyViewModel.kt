@@ -41,6 +41,8 @@ class StudyViewModel(
     // 对外暴露的只读LiveData
     val isLoading: LiveData<Boolean> = _isLoading
     
+    val favoriteWords: LiveData<List<Word>> = repository.getFavoriteWords()
+    
     /**
      * 加载今日学习单词
      * 

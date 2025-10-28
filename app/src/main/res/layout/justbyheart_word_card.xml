@@ -14,16 +14,19 @@
         android:fillViewport="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/card_content_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="32dp">
+            android:padding="32dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_favorite"
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                app:icon="@drawable/ic_favorite_border"
+                app:icon="@drawable/selector_favorite_icon"
                 app:iconTint="?attr/colorPrimary"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -91,7 +94,7 @@
                 android:id="@+id/label_definition"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android.layout_marginTop="24dp"
+                android:layout_marginTop="24dp"
                 android:text="词性"
                 android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                 android:textColor="?attr/colorSecondary"
@@ -143,6 +146,27 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/text_example"
                 tools:text="他们不得不把车丢在雪地里。" />
+
+            <androidx.constraintlayout.widget.Group
+                android:id="@+id/front_of_card_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:constraint_referenced_ids="text_english,text_pronunciation,button_speak,text_chinese,divider1,label_definition,text_definition,label_example,text_example,text_example_translation" />
+
+            <TextView
+                android:id="@+id/back_of_card"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+                android:textColor="?attr/colorPrimary"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="abandon" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

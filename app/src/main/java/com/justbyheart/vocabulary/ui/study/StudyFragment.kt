@@ -113,6 +113,12 @@ class StudyFragment : Fragment() {
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.viewPagerWords.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
+
+        // 观察收藏单词列表的变化
+        viewModel.favoriteWords.observe(viewLifecycleOwner) { favoriteWords ->
+            // 更新适配器中的收藏列表
+            wordAdapter.setFavoriteWords(favoriteWords)
+        }
     }
     
     override fun onDestroyView() {
