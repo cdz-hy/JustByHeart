@@ -3,6 +3,7 @@ package com.justbyheart.vocabulary.data.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.justbyheart.vocabulary.data.entity.StudyRecord
+import com.justbyheart.vocabulary.data.entity.Word
 import java.util.Date
 
 /**
@@ -87,6 +88,9 @@ interface StudyRecordDao {
 
     @Query("SELECT COUNT(DISTINCT wordId) FROM study_records WHERE wordId IN (:wordIds) AND studyDate = :date AND isCompleted = 1")
     suspend fun getCompletedWordsCountForSpecificWords(wordIds: List<Long>, date: Date): Int
+
+    @Query("SELECT w.* FROM words w INNER JOIN study_records s ON w.id = s.wordId WHERE s.studyDate = :date AND s.isCompleted = 1 ORDER BY w.id ASC")
+    suspend fun getCompletedWordsForDate(date: Date): List<Word>
 
     /**
      * 根据单词ID和学习日期获取学习记录

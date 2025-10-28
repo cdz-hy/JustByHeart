@@ -51,7 +51,12 @@ class ReviewFragment : Fragment() {
         setupRecyclerView()
         setupUI()
         observeViewModel()
-        viewModel.loadStudyDates()
+        // 默认显示本日已背诵的单词
+        val today = viewModel.getTodayZeroed()
+        viewModel.loadWordsForDate(today)
+        val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
+        binding.textSelectedDate.text = dateFormat.format(today)
+        binding.textSelectedDate.visibility = View.VISIBLE
     }
     
     private fun setupRecyclerView() {
@@ -80,8 +85,9 @@ class ReviewFragment : Fragment() {
                 
                 viewModel.loadWordsForDate(selectedDate)
                 
-                val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
+                val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
                 binding.textSelectedDate.text = dateFormat.format(selectedDate)
+                binding.textSelectedDate.visibility = View.VISIBLE
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -95,8 +101,13 @@ class ReviewFragment : Fragment() {
         viewModel.reviewWords.observe(viewLifecycleOwner) { words ->
             wordAdapter.submitList(words)
             
-            binding.textNoWords.visibility = if (words.isEmpty()) View.VISIBLE else View.GONE
-            binding.recyclerViewWords.visibility = if (words.isEmpty()) View.GONE else View.VISIBLE
+            if (words.isEmpty()) {
+                binding.textNoWords.visibility = View.VISIBLE
+                binding.recyclerViewWords.visibility = View.GONE
+            } else {
+                binding.textNoWords.visibility = View.GONE
+                binding.recyclerViewWords.visibility = View.VISIBLE
+            }
         }
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->

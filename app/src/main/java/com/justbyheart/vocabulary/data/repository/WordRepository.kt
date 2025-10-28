@@ -166,6 +166,8 @@ class WordRepository(
     fun getRecentDailyGoals(): LiveData<List<DailyGoal>> = 
         dailyGoalDao.getRecentDailyGoals()
 
+    suspend fun getCompletedWordsForDate(date: Date): List<Word> = studyRecordDao.getCompletedWordsForDate(date)
+
     suspend fun getCompletedWordsCountForSpecificWords(wordIds: List<Long>, date: Date): Int = 
         studyRecordDao.getCompletedWordsCountForSpecificWords(wordIds, date)
 
