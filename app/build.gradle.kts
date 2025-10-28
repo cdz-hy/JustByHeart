@@ -3,10 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("kotlin-parcelize")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
-    namespace = "com.ielts.vocabulary"
+    namespace = "com.justbyheart.vocabulary"
     compileSdk = 34
 
     defaultConfig {

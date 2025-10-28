@@ -14,7 +14,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_favorite_word" />
+        tools:listitem="@layout/justbyheart_favorite_word" />
 
     <TextView
         android:id="@+id/text_no_favorites"

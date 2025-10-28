@@ -7,38 +7,66 @@
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="com.ielts.vocabulary.ui.home.HomeFragment"
+        android:name="com.justbyheart.vocabulary.ui.home.HomeFragment"
         android:label="@string/title_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_search"
+            app:destination="@id/navigation_search" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_study"
-        android:name="com.ielts.vocabulary.ui.study.StudyFragment"
+        android:name="com.justbyheart.vocabulary.ui.study.StudyFragment"
         android:label="@string/title_study"
         tools:layout="@layout/fragment_study" />
 
     <fragment
         android:id="@+id/navigation_review"
-        android:name="com.ielts.vocabulary.ui.review.ReviewFragment"
+        android:name="com.justbyheart.vocabulary.ui.review.ReviewFragment"
         android:label="@string/title_review"
         tools:layout="@layout/fragment_review" />
 
     <fragment
         android:id="@+id/navigation_favorites"
-        android:name="com.ielts.vocabulary.ui.favorites.FavoritesFragment"
+        android:name="com.justbyheart.vocabulary.ui.favorites.FavoritesFragment"
         android:label="@string/title_favorites"
         tools:layout="@layout/fragment_favorites" />
 
     <fragment
         android:id="@+id/navigation_settings"
-        android:name="com.ielts.vocabulary.ui.settings.SettingsFragment"
+        android:name="com.justbyheart.vocabulary.ui.settings.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/testFragment"
-        android:name="com.ielts.vocabulary.ui.test.TestFragment"
+        android:name="com.justbyheart.vocabulary.ui.test.TestFragment"
         android:label="@string/title_test"
         tools:layout="@layout/fragment_test" />
+
+    <fragment
+        android:id="@+id/navigation_search"
+        android:name="com.justbyheart.vocabulary.ui.search.SearchFragment"
+        android:label="搜索"
+        tools:layout="@layout/fragment_search" >
+        <argument
+            android:name="query"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_navigation_search_to_wordCardDisplayFragment"
+            app:destination="@id/wordCardDisplayFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/wordCardDisplayFragment"
+        android:name="com.justbyheart.vocabulary.ui.worddisplay.WordDisplayFragment"
+        android:label="单词详情"
+        tools:layout="@layout/fragment_word_display" >
+        <argument
+            android:name="wordId"
+            app:argType="long" />
+    </fragment>
 
 </navigation>

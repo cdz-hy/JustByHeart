@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "IELTS Vocabulary"
+rootProject.name = "JustByHeart Vocabulary"
 include(":app")
