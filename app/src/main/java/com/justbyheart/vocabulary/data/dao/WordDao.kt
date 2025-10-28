@@ -90,6 +90,15 @@ interface WordDao {
     @Delete
     suspend fun deleteWord(word: Word)
 
+    @Query("SELECT w.* FROM words w WHERE w.id NOT IN (SELECT s.wordId FROM study_records s WHERE s.isCompleted = 1) ORDER BY w.id ASC LIMIT :count")
+    suspend fun getUncompletedWords(count: Int): List<Word>
+
+    @Query("SELECT * FROM words WHERE id IN (:ids)")
+    suspend fun getWordsByIds(ids: List<Long>): List<Word>
+
+    @Query("SELECT w.* FROM words w WHERE w.id NOT IN (SELECT s.wordId FROM study_records s WHERE s.isCompleted = 1) AND w.id NOT IN (:excludeIds) ORDER BY w.id ASC LIMIT :count")
+    suspend fun getAdditionalUncompletedWords(count: Int, excludeIds: List<Long>): List<Word>
+
     /**
      * 获取单词总数
      * @return 数据库中单词的总数量

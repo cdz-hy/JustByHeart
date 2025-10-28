@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.justbyheart.vocabulary.data.entity.DailyGoal
 import com.justbyheart.vocabulary.data.entity.StudyRecord
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.data.repository.WordRepository
@@ -42,6 +43,9 @@ class StudyViewModel(
     val isLoading: LiveData<Boolean> = _isLoading
     
     val favoriteWords: LiveData<List<Word>> = repository.getFavoriteWords()
+
+    private var todaysWordList: List<Word>? = null
+    private var dateOfTodaysWordList: Date? = null
     
     /**
      * 加载今日学习单词
@@ -51,37 +55,63 @@ class StudyViewModel(
     fun loadTodayWords() {
         viewModelScope.launch {
             _isLoading.value = true
-            
-            // 获取今日零点时间
-            val today = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.time
-            
-            // 获取今日学习目标，如果没有则默认10个单词
-            val dailyGoal = repository.getDailyGoalByDate(today)
-            val targetCount = dailyGoal?.targetWordCount ?: 10
-            
-            // 随机获取指定数量的单词
-            val words = repository.getRandomWords(targetCount)
-            _todayWords.value = words
+            val today = getTodayZeroed()
 
-            // 为每个单词创建学习记录
-            words.forEach { word ->
-                val studyRecord = StudyRecord(
-                    wordId = word.id,
-                    studyDate = today,
-                    isCompleted = false
+            var dailyGoal = repository.getDailyGoalByDate(today)
+            var currentDailyWordIds: List<Long>
+
+            // 如果今日目标不存在，或者每日单词ID列表为空，则生成新的今日单词列表并保存
+            if (dailyGoal == null || dailyGoal.dailyWordIds.isEmpty()) {
+                val targetCount = dailyGoal?.targetWordCount ?: 10
+                val newWords = repository.getUncompletedWords(targetCount)
+                currentDailyWordIds = newWords.map { it.id }
+                
+                val updatedGoal = (dailyGoal ?: DailyGoal(date = today)).copy(
+                    dailyWordIds = currentDailyWordIds.joinToString(","),
+                    targetWordCount = targetCount
                 )
-                repository.insertStudyRecord(studyRecord)
+                repository.insertDailyGoal(updatedGoal)
+            } else {
+                // 如果今日目标存在且每日单词ID列表不为空，则使用存储的ID列表
+                currentDailyWordIds = dailyGoal.dailyWordIds.split(",").map { it.toLong() }
+
+                // 检查目标数量是否发生变化
+                val newTargetCount = dailyGoal.targetWordCount
+                if (currentDailyWordIds.size != newTargetCount) {
+                    if (currentDailyWordIds.size < newTargetCount) {
+                        // 需要补充单词
+                        val wordsToSupplementCount = newTargetCount - currentDailyWordIds.size
+                        val additionalWords = repository.getAdditionalUncompletedWords(wordsToSupplementCount, currentDailyWordIds)
+                        currentDailyWordIds = currentDailyWordIds + additionalWords.map { it.id }
+                    } else {
+                        // 需要删减单词
+                        currentDailyWordIds = currentDailyWordIds.take(newTargetCount)
+                    }
+                    // 更新DailyGoal中的dailyWordIds
+                    val updatedGoal = dailyGoal.copy(dailyWordIds = currentDailyWordIds.joinToString(","))
+                    repository.insertDailyGoal(updatedGoal)
+                }
             }
+
+            val wordsForToday = if (currentDailyWordIds.isNotEmpty()) repository.getWordsByIds(currentDailyWordIds) else emptyList()
             
+            val completedIds = repository.getCompletedWordIdsForDate(today)
+            val wordsToShow = wordsForToday.filter { !completedIds.contains(it.id) }
+
+            _todayWords.value = wordsToShow
             _isLoading.value = false
         }
     }
     
+    private fun getTodayZeroed(): Date {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+    }
+
     /**
      * 更新当前学习位置
      * 

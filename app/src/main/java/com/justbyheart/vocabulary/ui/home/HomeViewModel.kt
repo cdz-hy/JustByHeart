@@ -65,17 +65,25 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
             
             // 查询今日的学习目标
             val dailyGoal = repository.getDailyGoalByDate(today)
+            val targetCount = dailyGoal?.targetWordCount ?: 10
+            val dailyWordIds = dailyGoal?.dailyWordIds?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList()
+
+            val completedCount = if (dailyWordIds.isNotEmpty()) {
+                repository.getCompletedWordsCountForSpecificWords(dailyWordIds, today)
+            } else {
+                0
+            }
             
             if (dailyGoal == null) {
                 // 如果今日没有目标记录，创建默认目标
                 val newGoal = DailyGoal(date = today, targetWordCount = 10)
                 repository.insertDailyGoal(newGoal)
-                _dailyProgress.value = DailyProgress(target = 10, completed = 0)
+                _dailyProgress.value = DailyProgress(target = 10, completed = completedCount)
             } else {
                 // 使用已有的目标记录
                 _dailyProgress.value = DailyProgress(
                     target = dailyGoal.targetWordCount,
-                    completed = dailyGoal.completedWordCount
+                    completed = completedCount
                 )
             }
             

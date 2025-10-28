@@ -21,6 +21,7 @@ import java.util.Date
  */
 @Entity(
     tableName = "study_records",
+    primaryKeys = ["wordId", "studyDate"],
     foreignKeys = [
         ForeignKey(
             entity = Word::class,
@@ -31,8 +32,6 @@ import java.util.Date
     ]
 )
 data class StudyRecord(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
     val wordId: Long,                    // 关联的单词ID
     val studyDate: Date,                 // 学习日期
     val isCompleted: Boolean = false,    // 是否完成学习

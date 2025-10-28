@@ -18,10 +18,10 @@ import java.util.Date
  */
 @Entity(tableName = "daily_goals")
 data class DailyGoal(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
     val date: Date,                      // 目标日期
     val targetWordCount: Int = 10,       // 目标单词数量
     val completedWordCount: Int = 0,     // 已完成单词数量
-    val isCompleted: Boolean = false     // 是否完成目标
+    val isCompleted: Boolean = false,    // 是否完成目标
+    val dailyWordIds: String = ""         // 当日学习的单词ID列表，用逗号分隔
 )

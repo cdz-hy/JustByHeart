@@ -77,7 +77,7 @@ abstract class VocabularyDatabase : RoomDatabase() {
                     context.applicationContext,
                     VocabularyDatabase::class.java,
                     "vocabulary_database"  // 数据库文件名
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

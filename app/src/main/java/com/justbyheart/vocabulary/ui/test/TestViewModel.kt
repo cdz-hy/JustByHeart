@@ -140,14 +140,14 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
         }
 
         viewModelScope.launch {
-            val record = repository.getStudyRecordByWordIdAndDate(wordId, getTodayZeroed())
-            record?.let { studyRecord ->
-                val updatedRecord = studyRecord.copy(
-                    correctCount = studyRecord.correctCount + if (isCorrect) 1 else 0,
-                    wrongCount = studyRecord.wrongCount + if (isCorrect) 0 else 1
-                )
-                repository.updateStudyRecord(updatedRecord)
-            }
+            val today = getTodayZeroed()
+            val record = repository.getStudyRecordByWordIdAndDate(wordId, today) ?: StudyRecord(wordId = wordId, studyDate = today)
+
+            val updatedRecord = record.copy(
+                correctCount = record.correctCount + if (isCorrect) 1 else 0,
+                wrongCount = record.wrongCount + if (isCorrect) 0 else 1
+            )
+            repository.insertStudyRecord(updatedRecord)
         }
 
         _showCorrectAnswer.value = currentQ.correctAnswerIndex

@@ -52,6 +52,8 @@ class WordRepository(
      */
     suspend fun getRandomWords(count: Int): List<Word> = wordDao.getRandomWords(count)
     
+    suspend fun getUncompletedWords(count: Int): List<Word> = wordDao.getUncompletedWords(count)
+
     /**
      * 批量插入单词
      * @param words 单词列表
@@ -88,8 +90,12 @@ class WordRepository(
      * @param studyDate 学习日期
      * @return 学习记录对象或null
      */
-    suspend fun getStudyRecordByWordIdAndDate(wordId: Long, studyDate: Date): StudyRecord? =
-        studyRecordDao.getStudyRecordByWordIdAndDate(wordId, studyDate)
+    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> = studyRecordDao.getCompletedWordIdsForDate(date)
+
+    suspend fun getWordsByIds(ids: List<Long>): List<Word> = wordDao.getWordsByIds(ids)
+
+    suspend fun getStudyRecordByWordIdAndDate(wordId: Long, date: Date): StudyRecord? = 
+        studyRecordDao.getStudyRecordByWordIdAndDate(wordId, date)
     
     /**
      * 获取所有学习日期
@@ -159,6 +165,11 @@ class WordRepository(
      */
     fun getRecentDailyGoals(): LiveData<List<DailyGoal>> = 
         dailyGoalDao.getRecentDailyGoals()
+
+    suspend fun getCompletedWordsCountForSpecificWords(wordIds: List<Long>, date: Date): Int = 
+        studyRecordDao.getCompletedWordsCountForSpecificWords(wordIds, date)
+
+    suspend fun getAdditionalUncompletedWords(count: Int, excludeIds: List<Long>): List<Word> = wordDao.getAdditionalUncompletedWords(count, excludeIds)
 
     suspend fun getMemorizedWordsCount(): Int = studyRecordDao.getMemorizedWordsCount()
 

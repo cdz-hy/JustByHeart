@@ -53,6 +53,11 @@ class StudyFragment : Fragment() {
         viewModel.loadTodayWords()
     }
     
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadTodayWords()
+    }
+    
     private fun setupViewPager() {
                 // 初始化适配器，并传入两个回调函数：
                 // 1. 点击收藏按钮时的回调
@@ -103,15 +108,24 @@ class StudyFragment : Fragment() {
     
     private fun observeViewModel() {
         viewModel.todayWords.observe(viewLifecycleOwner) { words ->
-            wordAdapter.submitList(words)
-            binding.textProgress.text = "0/${words.size}"
+            wordAdapter.submitList(words) {
+                // 当列表更新完成后，如果列表不为空，则立即更新进度
+                if (words.isNotEmpty()) {
+                    binding.textProgress.text = "1/${words.size}"
+                    viewModel.updateCurrentPosition(0)
+                } else {
+                    binding.textProgress.text = "0/0"
+                }
+            }
             
             binding.buttonStartTest.visibility = if (words.isNotEmpty()) View.VISIBLE else View.GONE
         }
         
         viewModel.currentPosition.observe(viewLifecycleOwner) { position ->
             val totalWords = wordAdapter.itemCount
-            binding.textProgress.text = "${position + 1}/$totalWords"
+            if (totalWords > 0) {
+                binding.textProgress.text = "${position + 1}/$totalWords"
+            }
             
             binding.buttonPrevious.isEnabled = position > 0
             binding.buttonNext.isEnabled = position < totalWords - 1
