@@ -18,10 +18,11 @@ import com.justbyheart.vocabulary.databinding.JustbyheartWordCardBinding
  */
 class WordPagerAdapter(
     private val onFavoriteClick: (Word, Boolean) -> Unit,
-    private val onWordFlipped: (Long) -> Unit // 新增：单词卡片被翻转时的回调
+    private val onWordFlipped: (Long, Boolean) -> Unit // 单词卡片被翻转时的回调，参数：单词ID，是否翻转到背面
 ) : ListAdapter<Word, WordPagerAdapter.WordViewHolder>(WordDiffCallback()) {
 
     private var favoriteWords: Set<Long> = emptySet()
+    private var flippedWords: Set<Long> = emptySet()
 
     /**
      * 设置收藏单词列表
@@ -41,6 +42,10 @@ class WordPagerAdapter(
         }
     }
 
+    fun setFlippedWords(wordIds: Set<Long>) {
+        flippedWords = wordIds
+    }
+
     /**
      * 创建ViewHolder
      */
@@ -58,7 +63,7 @@ class WordPagerAdapter(
      */
     override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
         val word = getItem(position)
-        holder.bind(word, favoriteWords.contains(word.id))
+        holder.bind(word, favoriteWords.contains(word.id), flippedWords.contains(word.id))
     }
 
     override fun onBindViewHolder(holder: WordViewHolder, position: Int, payloads: MutableList<Any>) {
@@ -77,7 +82,7 @@ class WordPagerAdapter(
     class WordViewHolder(
         private val binding: JustbyheartWordCardBinding,
         private val onFavoriteClick: (Word, Boolean) -> Unit,
-        private val onWordFlipped: (Long) -> Unit // 新增：单词卡片被翻转时的回调
+        private val onWordFlipped: (Long, Boolean) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private var isFavorite: Boolean = false
@@ -86,8 +91,9 @@ class WordPagerAdapter(
          * 绑定单词数据到视图
          * @param word 要显示的单词对象
          * @param isFavorite 单词是否被收藏
+         * @param isFlipped 单词卡片是否已翻转
          */
-        fun bind(word: Word, isFavorite: Boolean) {
+        fun bind(word: Word, isFavorite: Boolean, isFlipped: Boolean) {
             this.isFavorite = isFavorite
             // 绑定单词各项信息到对应视图组件
             binding.textEnglish.text = word.english
@@ -97,6 +103,15 @@ class WordPagerAdapter(
             binding.textExample.text = word.example ?: ""
             binding.textExampleTranslation.text = word.exampleTranslation ?: ""
             binding.backOfCard.text = word.english
+
+            // 根据翻转状态设置卡片显示正面或背面
+            if (isFlipped) {
+                binding.frontOfCardGroup.visibility = View.GONE
+                binding.backOfCard.visibility = View.VISIBLE
+            } else {
+                binding.frontOfCardGroup.visibility = View.VISIBLE
+                binding.backOfCard.visibility = View.GONE
+            }
 
             // 设置收藏按钮点击事件
             binding.buttonFavorite.setOnClickListener {
@@ -135,10 +150,9 @@ class WordPagerAdapter(
 
             val isShowingFront = frontView.visibility == View.VISIBLE
 
-            // 如果当前显示的是正面，则调用回调，将单词ID添加到已翻转列表
-            if (isShowingFront) {
-                onWordFlipped(word.id)
-            }
+            // 调用回调，传递单词ID和翻转状态
+            // 如果当前显示正面，翻转到背面则传递true；如果当前显示背面，翻转到正面则传递false
+            onWordFlipped(word.id, isShowingFront)
 
             // 设置摄像机距离以实现3D效果
             val distance = 8000

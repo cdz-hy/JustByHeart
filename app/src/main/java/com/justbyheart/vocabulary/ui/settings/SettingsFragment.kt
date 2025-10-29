@@ -10,6 +10,7 @@ import android.widget.SeekBar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentSettingsBinding
@@ -84,7 +85,7 @@ class SettingsFragment : Fragment() {
             // 当进度改变时更新显示的单词数量
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val wordCount = progress + 1 // 最少1个单词
-                binding.textDailyWordCount.text = "$wordCount 个单词/天"
+                binding.textDailyWordCount.text = getString(R.string.daily_word_count_format, wordCount)
             }
             
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -108,7 +109,7 @@ class SettingsFragment : Fragment() {
     private fun loadSettings() {
         val dailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
         binding.seekBarDailyWords.progress = dailyWordCount - 1
-        binding.textDailyWordCount.text = "$dailyWordCount 个单词/天"
+        binding.textDailyWordCount.text = getString(R.string.daily_word_count_format, dailyWordCount)
     }
     
     /**
@@ -129,16 +130,16 @@ class SettingsFragment : Fragment() {
      */
     private fun initializeWordData() {
         binding.buttonInitializeData.isEnabled = false
-        binding.textInitializeStatus.text = "正在初始化单词数据..."
+        binding.textInitializeStatus.text = getString(R.string.initializing_word_data)
         
         lifecycleScope.launch {
             try {
                 // 从assets目录加载单词数据
                 val words = WordDataLoader.loadWordsFromAssets(requireContext())
                 viewModel.initializeWords(words)
-                binding.textInitializeStatus.text = "单词数据初始化完成！共加载 ${words.size} 个单词"
+                binding.textInitializeStatus.text = getString(R.string.word_data_initialized, words.size)
             } catch (e: Exception) {
-                binding.textInitializeStatus.text = "初始化失败：${e.message}"
+                binding.textInitializeStatus.text = getString(R.string.initialization_failed, e.message)
             } finally {
                 binding.buttonInitializeData.isEnabled = true
             }

@@ -66,8 +66,14 @@ class StudyFragment : Fragment() {
                     word, isFavorite ->
                     viewModel.toggleFavorite(word.id, isFavorite)
                 }, {
-                    wordId ->
-                    viewModel.addFlippedWord(wordId)
+                    wordId, isFlippedToBack ->
+                    if (isFlippedToBack) {
+                        // 从正面翻转到背面
+                        viewModel.addFlippedWord(wordId)
+                    } else {
+                        // 从背面翻转到正面
+                        viewModel.removeFlippedWord(wordId)
+                    }
                 })
         
         binding.viewPagerWords.adapter = wordAdapter
@@ -84,11 +90,17 @@ class StudyFragment : Fragment() {
     private fun setupUI() {
         // 设置开始测试按钮的点击事件
         binding.buttonStartTest.setOnClickListener {
-            // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
-            val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
-                viewModel.flippedWords.toLongArray()
-            )
-            findNavController().navigate(action)
+            // 检查是否有翻转的单词
+            if (viewModel.flippedWords.value.isNullOrEmpty()) {
+                // 如果没有翻转的单词，显示提示信息
+                android.widget.Toast.makeText(requireContext(), R.string.select_flipped_word_first, android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
+                val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
+                    viewModel.flippedWords.value!!.toLongArray()
+                )
+                findNavController().navigate(action)
+            }
         }
         
         binding.buttonPrevious.setOnClickListener {
@@ -111,10 +123,10 @@ class StudyFragment : Fragment() {
             wordAdapter.submitList(words) {
                 // 当列表更新完成后，如果列表不为空，则立即更新进度
                 if (words.isNotEmpty()) {
-                    binding.textProgress.text = "1/${words.size}"
+                    binding.textProgress.text = getString(R.string.study_progress_format, 1, words.size)
                     viewModel.updateCurrentPosition(0)
                 } else {
-                    binding.textProgress.text = "0/0"
+                    binding.textProgress.text = getString(R.string.study_progress_format, 0, 0)
                 }
             }
             
@@ -124,7 +136,7 @@ class StudyFragment : Fragment() {
         viewModel.currentPosition.observe(viewLifecycleOwner) { position ->
             val totalWords = wordAdapter.itemCount
             if (totalWords > 0) {
-                binding.textProgress.text = "${position + 1}/$totalWords"
+                binding.textProgress.text = getString(R.string.study_progress_format, position + 1, totalWords)
             }
             
             binding.buttonPrevious.isEnabled = position > 0
@@ -144,6 +156,11 @@ class StudyFragment : Fragment() {
         viewModel.favoriteWords.observe(viewLifecycleOwner) { favoriteWords ->
             // 更新适配器中的收藏列表
             wordAdapter.setFavoriteWords(favoriteWords)
+        }
+        
+        // 观察翻转单词列表的变化
+        viewModel.flippedWords.observe(viewLifecycleOwner) { flippedWords ->
+            wordAdapter.setFlippedWords(flippedWords)
         }
     }
     

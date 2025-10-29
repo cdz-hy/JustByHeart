@@ -23,5 +23,6 @@ data class DailyGoal(
     val targetWordCount: Int = 10,       // 目标单词数量
     val completedWordCount: Int = 0,     // 已完成单词数量
     val isCompleted: Boolean = false,    // 是否完成目标
-    val dailyWordIds: String = ""         // 当日学习的单词ID列表，用逗号分隔
+    val dailyWordIds: String = "",       // 当日学习的单词ID列表，用逗号分隔
+    val flippedWordIds: String = ""      // 当日已翻转的单词ID列表，用逗号分隔
 )

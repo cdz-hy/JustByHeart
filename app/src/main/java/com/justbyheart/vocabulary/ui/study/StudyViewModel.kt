@@ -43,6 +43,11 @@ class StudyViewModel(
     val isLoading: LiveData<Boolean> = _isLoading
     
     val favoriteWords: LiveData<List<Word>> = repository.getFavoriteWords()
+    
+    // 翻转单词列表的私有可变LiveData
+    private val _flippedWords = MutableLiveData<Set<Long>>(emptySet())
+    // 对外暴露的只读LiveData
+    val flippedWords: LiveData<Set<Long>> = _flippedWords
 
     private var todaysWordList: List<Word>? = null
     private var dateOfTodaysWordList: Date? = null
@@ -68,9 +73,11 @@ class StudyViewModel(
                 
                 val updatedGoal = (dailyGoal ?: DailyGoal(date = today)).copy(
                     dailyWordIds = currentDailyWordIds.joinToString(","),
-                    targetWordCount = targetCount
+                    targetWordCount = targetCount,
+                    flippedWordIds = dailyGoal?.flippedWordIds ?: ""
                 )
                 repository.insertDailyGoal(updatedGoal)
+                dailyGoal = updatedGoal
             } else {
                 // 如果今日目标存在且每日单词ID列表不为空，则使用存储的ID列表
                 currentDailyWordIds = dailyGoal.dailyWordIds.split(",").map { it.toLong() }
@@ -88,10 +95,21 @@ class StudyViewModel(
                         currentDailyWordIds = currentDailyWordIds.take(newTargetCount)
                     }
                     // 更新DailyGoal中的dailyWordIds
-                    val updatedGoal = dailyGoal.copy(dailyWordIds = currentDailyWordIds.joinToString(","))
-                    repository.insertDailyGoal(updatedGoal)
+                    val updatedGoal = dailyGoal.copy(
+                        dailyWordIds = currentDailyWordIds.joinToString(","),
+                        flippedWordIds = dailyGoal.flippedWordIds
+                    )
+                    repository.updateDailyGoal(updatedGoal)
+                    dailyGoal = updatedGoal
                 }
             }
+
+            // 从数据库加载已翻转的单词ID
+            val flippedWordIds = dailyGoal.flippedWordIds
+                .split(",")
+                .mapNotNull { it.toLongOrNull() }
+                .toSet()
+            _flippedWords.value = flippedWordIds
 
             val wordsForToday = if (currentDailyWordIds.isNotEmpty()) repository.getWordsByIds(currentDailyWordIds) else emptyList()
             
@@ -138,14 +156,62 @@ class StudyViewModel(
     }
     
     // 存储在本次学习中被翻转过的单词ID
-    val flippedWords = mutableSetOf<Long>()
+    // val flippedWords = mutableSetOf<Long>()
 
     /**
      * 添加一个翻转过的单词ID到集合中
      * @param wordId 被翻转的单词ID
      */
     fun addFlippedWord(wordId: Long) {
-        flippedWords.add(wordId)
+        viewModelScope.launch {
+            val today = getTodayZeroed()
+            val dailyGoal = repository.getDailyGoalByDate(today)
+            if (dailyGoal != null) {
+                val currentFlippedWords = dailyGoal.flippedWordIds
+                    .split(",")
+                    .mapNotNull { it.toLongOrNull() }
+                    .toMutableSet()
+                
+                // 只有当单词尚未在翻转列表中时才添加并更新数据库
+                if (currentFlippedWords.add(wordId)) {
+                    val updatedGoal = dailyGoal.copy(
+                        flippedWordIds = currentFlippedWords.joinToString(",")
+                    )
+                    repository.updateDailyGoal(updatedGoal)
+                    
+                    // 更新LiveData
+                    _flippedWords.value = currentFlippedWords
+                }
+            }
+        }
+    }
+
+    /**
+     * 从翻转过的单词ID集合中移除
+     * @param wordId 被翻转回正面的单词ID
+     */
+    fun removeFlippedWord(wordId: Long) {
+        viewModelScope.launch {
+            val today = getTodayZeroed()
+            val dailyGoal = repository.getDailyGoalByDate(today)
+            if (dailyGoal != null) {
+                val currentFlippedWords = dailyGoal.flippedWordIds
+                    .split(",")
+                    .mapNotNull { it.toLongOrNull() }
+                    .toMutableSet()
+                
+                // 只有当单词在翻转列表中时才移除并更新数据库
+                if (currentFlippedWords.remove(wordId)) {
+                    val updatedGoal = dailyGoal.copy(
+                        flippedWordIds = currentFlippedWords.joinToString(",")
+                    )
+                    repository.updateDailyGoal(updatedGoal)
+                    
+                    // 更新LiveData
+                    _flippedWords.value = currentFlippedWords
+                }
+            }
+        }
     }
 
     /**

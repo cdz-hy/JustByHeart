@@ -24,6 +24,9 @@
     <string name="add_to_favorites">收藏</string>
     <string name="remove_from_favorites">取消收藏</string>
     <string name="start_test">开始测试</string>
+    <string name="select_flipped_word_first">请先点击单词卡片选择待测单词~</string>
+    <string name="word_not_found">单词未找到</string>
+    <string name="study_progress_format">%1$d/%2$d</string>
     
     <!-- Test Fragment -->
     <string name="test_instruction">请选择正确答案</string>
@@ -41,6 +44,10 @@
     <string name="data_management">数据管理</string>
     <string name="export_data">导出数据</string>
     <string name="import_data">导入数据</string>
+    <string name="initializing_word_data">正在初始化单词数据...</string>
+    <string name="word_data_initialized">单词数据初始化完成！共加载 %1$d 个单词</string>
+    <string name="initialization_failed">初始化失败：%1$s</string>
+    <string name="daily_word_count_format">%1$d 个单词/天</string>
     
     <!-- Review Fragment -->
     <string name="select_date">选择日期</string>

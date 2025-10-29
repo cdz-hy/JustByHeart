@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentWordDisplayBinding
@@ -63,7 +64,7 @@ class WordDisplayFragment : Fragment() {
                 binding.textExample.text = word.example
                 binding.textExampleTranslation.text = word.exampleTranslation
             } else {
-                Toast.makeText(context, "单词未找到", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.word_not_found, Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
             }
         }
