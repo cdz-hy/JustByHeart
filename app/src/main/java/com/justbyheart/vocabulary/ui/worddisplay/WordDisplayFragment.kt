@@ -55,6 +55,10 @@ class WordDisplayFragment : Fragment() {
             findNavController().popBackStack()
         }
 
+        binding.buttonFavorite.setOnClickListener {
+            viewModel.toggleFavorite()
+        }
+
         observeViewModel()
     }
 
@@ -65,8 +69,17 @@ class WordDisplayFragment : Fragment() {
                 binding.textPronunciation.text = word.pronunciation
                 binding.textChinese.text = word.chinese
                 binding.textDefinition.text = word.definition
-                binding.textExample.text = word.example
-                binding.textExampleTranslation.text = word.exampleTranslation
+
+                // Display examples
+                val examples = word.example?.split("\n") ?: emptyList()
+                val exampleTranslations = word.exampleTranslation?.split("\n") ?: emptyList()
+
+                val formattedExamples = StringBuilder()
+                for (i in 0 until minOf(examples.size, exampleTranslations.size)) {
+                    formattedExamples.append(examples[i]).append("\n")
+                    formattedExamples.append(exampleTranslations[i]).append("\n\n")
+                }
+                binding.textExample.text = formattedExamples.toString().trimEnd() // Remove trailing newlines
             } else {
                 Toast.makeText(context, R.string.word_not_found, Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
@@ -74,6 +87,10 @@ class WordDisplayFragment : Fragment() {
         }
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.isFavorite.observe(viewLifecycleOwner) { isFavorite ->
+            binding.buttonFavorite.isSelected = isFavorite
         }
     }
 

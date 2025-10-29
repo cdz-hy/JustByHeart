@@ -10,9 +10,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
-import com.justbyheart.vocabulary.databinding.FragmentReviewBinding
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.tabs.TabLayout
 import java.text.SimpleDateFormat
 import java.util.*
+// 导入正确的ViewBinding类
+import com.justbyheart.vocabulary.databinding.FragmentReviewBinding
 
 class ReviewFragment : Fragment() {
     
@@ -60,7 +63,10 @@ class ReviewFragment : Fragment() {
     }
     
     private fun setupRecyclerView() {
-        wordAdapter = ReviewWordAdapter()
+        wordAdapter = ReviewWordAdapter { word ->
+            val action = ReviewFragmentDirections.actionReviewFragmentToWordDisplayFragment(word.id)
+            findNavController().navigate(action)
+        }
         binding.recyclerViewWords.apply {
             adapter = wordAdapter
             layoutManager = LinearLayoutManager(requireContext())

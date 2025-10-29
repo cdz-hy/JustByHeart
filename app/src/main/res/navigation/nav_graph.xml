@@ -32,13 +32,21 @@
         android:id="@+id/navigation_review"
         android:name="com.justbyheart.vocabulary.ui.review.ReviewFragment"
         android:label="@string/title_review"
-        tools:layout="@layout/fragment_review" />
+        tools:layout="@layout/fragment_review" >
+        <action
+            android:id="@+id/action_reviewFragment_to_wordDisplayFragment"
+            app:destination="@id/wordCardDisplayFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_favorites"
         android:name="com.justbyheart.vocabulary.ui.favorites.FavoritesFragment"
         android:label="@string/title_favorites"
-        tools:layout="@layout/fragment_favorites" />
+        tools:layout="@layout/fragment_favorites" >
+        <action
+            android:id="@+id/action_favoritesFragment_to_wordDisplayFragment"
+            app:destination="@id/wordCardDisplayFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_settings"

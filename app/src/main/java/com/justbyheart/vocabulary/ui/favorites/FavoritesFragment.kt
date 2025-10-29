@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentFavoritesBinding
@@ -50,9 +51,12 @@ class FavoritesFragment : Fragment() {
     }
     
     private fun setupRecyclerView() {
-        favoriteAdapter = FavoriteWordAdapter { word ->
-            viewModel.removeFromFavorites(word.id)
-        }
+        favoriteAdapter = FavoriteWordAdapter({
+            viewModel.removeFromFavorites(it.id)
+        }, {
+            val action = FavoritesFragmentDirections.actionFavoritesFragmentToWordDisplayFragment(it.id)
+            findNavController().navigate(action)
+        })
         
         binding.recyclerViewFavorites.apply {
             adapter = favoriteAdapter

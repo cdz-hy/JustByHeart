@@ -100,8 +100,17 @@ class WordPagerAdapter(
             binding.textChinese.text = word.chinese
             binding.textPronunciation.text = word.pronunciation ?: ""
             binding.textDefinition.text = word.definition ?: ""
-            binding.textExample.text = word.example ?: ""
-            binding.textExampleTranslation.text = word.exampleTranslation ?: ""
+            // 只显示第一组例句
+            val examples = word.example?.split("\n") ?: emptyList()
+            val exampleTranslations = word.exampleTranslation?.split("\n") ?: emptyList()
+
+            if (examples.isNotEmpty() && exampleTranslations.isNotEmpty()) {
+                binding.textExample.text = examples[0]
+                binding.textExampleTranslation.text = exampleTranslations[0]
+            } else {
+                binding.textExample.text = ""
+                binding.textExampleTranslation.text = ""
+            }
             binding.backOfCard.text = word.english
 
             // 根据翻转状态设置卡片显示正面或背面

@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.databinding.JustbyheartSimpleWordBinding
 
-class ReviewWordAdapter : ListAdapter<Word, ReviewWordAdapter.WordViewHolder>(WordDiffCallback()) {
+class ReviewWordAdapter(private val onItemClick: (Word) -> Unit) : ListAdapter<Word, ReviewWordAdapter.WordViewHolder>(WordDiffCallback()) {
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WordViewHolder {
         val binding = JustbyheartSimpleWordBinding.inflate(
@@ -16,7 +16,7 @@ class ReviewWordAdapter : ListAdapter<Word, ReviewWordAdapter.WordViewHolder>(Wo
             parent,
             false
         )
-        return WordViewHolder(binding)
+        return WordViewHolder(binding, onItemClick)
     }
     
     override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
@@ -24,13 +24,15 @@ class ReviewWordAdapter : ListAdapter<Word, ReviewWordAdapter.WordViewHolder>(Wo
     }
     
     class WordViewHolder(
-        private val binding: JustbyheartSimpleWordBinding
+        private val binding: JustbyheartSimpleWordBinding,
+        private val onItemClick: (Word) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
         
         fun bind(word: Word) {
             binding.textEnglish.text = word.english
             binding.textChinese.text = word.chinese
             binding.textPronunciation.text = word.pronunciation ?: ""
+            itemView.setOnClickListener { onItemClick(word) }
         }
     }
     

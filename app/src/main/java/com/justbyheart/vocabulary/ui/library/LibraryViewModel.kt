@@ -26,7 +26,7 @@ class LibraryViewModel(private val repository: WordRepository) : ViewModel() {
 
     fun loadCompletedWords() {
         viewModelScope.launch {
-            _completedWords.value = repository.getCompletedWordsForDate(Date())
+            _completedWords.value = repository.getCompletedWords()
         }
     }
 }

@@ -99,6 +99,9 @@ interface WordDao {
     @Query("SELECT w.* FROM words w WHERE w.id NOT IN (SELECT s.wordId FROM study_records s WHERE s.isCompleted = 1) AND w.id NOT IN (:excludeIds) ORDER BY w.id ASC LIMIT :count")
     suspend fun getAdditionalUncompletedWords(count: Int, excludeIds: List<Long>): List<Word>
 
+    @Query("SELECT w.* FROM words w WHERE w.id IN (SELECT s.wordId FROM study_records s WHERE s.isCompleted = 1) ORDER BY w.id ASC")
+    suspend fun getCompletedWords(): List<Word>
+
     /**
      * 获取单词总数
      * @return 数据库中单词的总数量

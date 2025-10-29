@@ -9,7 +9,8 @@ import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.databinding.JustbyheartFavoriteWordBinding
 
 class FavoriteWordAdapter(
-    private val onRemoveClick: (Word) -> Unit
+    private val onRemoveClick: (Word) -> Unit,
+    private val onItemClick: (Word) -> Unit
 ) : ListAdapter<Word, FavoriteWordAdapter.WordViewHolder>(WordDiffCallback()) {
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WordViewHolder {
@@ -18,7 +19,7 @@ class FavoriteWordAdapter(
             parent,
             false
         )
-        return WordViewHolder(binding, onRemoveClick)
+        return WordViewHolder(binding, onRemoveClick, onItemClick)
     }
     
     override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
@@ -27,7 +28,8 @@ class FavoriteWordAdapter(
     
     class WordViewHolder(
         private val binding: JustbyheartFavoriteWordBinding,
-        private val onRemoveClick: (Word) -> Unit
+        private val onRemoveClick: (Word) -> Unit,
+        private val onItemClick: (Word) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
         
         fun bind(word: Word) {
@@ -38,6 +40,8 @@ class FavoriteWordAdapter(
             binding.buttonRemove.setOnClickListener {
                 onRemoveClick(word)
             }
+
+            itemView.setOnClickListener { onItemClick(word) }
         }
     }
     

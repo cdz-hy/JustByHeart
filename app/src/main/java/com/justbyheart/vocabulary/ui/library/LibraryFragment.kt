@@ -51,10 +51,6 @@ class LibraryFragment : Fragment() {
             findNavController().popBackStack()
         }
 
-        binding.buttonBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
         viewModel.loadUncompletedWords()
     }
 

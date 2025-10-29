@@ -75,12 +75,12 @@ object WordDataLoader {
                 val detailContent = jsonWord.content.word.content
 
                 // 拼接中文翻译 (pos. 中文翻译；pos. 中文翻译)
-                val chineseTranslations = detailContent.translations?.joinToString("\n") { tran ->
+                val chineseTranslations = detailContent.translations?.joinToString("；") { tran ->
                     "${tran.pos ?: ""}. ${tran.chinese ?: ""}"
                 } ?: ""
 
                 // 拼接英文释义 (pos. 英文释义；pos. 英文释义)
-                val englishDefinitions = detailContent.translations?.joinToString("\n") { tran ->
+                val englishDefinitions = detailContent.translations?.joinToString("；") { tran ->
                     "${tran.pos ?: ""}. ${tran.tranOther ?: ""}"
                 } ?: ""
 
