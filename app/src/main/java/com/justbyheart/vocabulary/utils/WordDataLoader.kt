@@ -22,7 +22,6 @@ data class JsonWordContent(
     @SerializedName("word")
     val word: JsonWordDetail
 )
-
 data class JsonWordDetail(
     @SerializedName("wordHead")
     val wordHead: String,
@@ -45,7 +44,9 @@ data class JsonTranslation(
     @SerializedName("tranCn")
     val chinese: String?,
     @SerializedName("pos")
-    val pos: String?
+    val pos: String?,
+    @SerializedName("tranOther")
+    val tranOther: String?
 )
 
 data class JsonSentence(
@@ -72,16 +73,37 @@ object WordDataLoader {
             // 转换为Word实体对象
             jsonWords.map { jsonWord ->
                 val detailContent = jsonWord.content.word.content
-                val firstTranslation = detailContent.translations?.firstOrNull()
-                val firstSentence = detailContent.sentence?.sentences?.firstOrNull()
-                
+
+                // 拼接中文翻译 (pos. 中文翻译；pos. 中文翻译)
+                val chineseTranslations = detailContent.translations?.joinToString("\n") { tran ->
+                    "${tran.pos ?: ""}. ${tran.chinese ?: ""}"
+                } ?: ""
+
+                // 拼接英文释义 (pos. 英文释义；pos. 英文释义)
+                val englishDefinitions = detailContent.translations?.joinToString("\n") { tran ->
+                    "${tran.pos ?: ""}. ${tran.tranOther ?: ""}"
+                } ?: ""
+
+                // 拼接例句
+                val examples = detailContent.sentence?.sentences?.joinToString("\n") { sentence ->
+                    sentence.content ?: ""
+                } ?: ""
+
+                // 拼接例句翻译
+                val exampleTranslations = detailContent.sentence?.sentences?.joinToString("\n") { sentence ->
+                    sentence.translation ?: ""
+                } ?: ""
+
+                // 格式化音标
+                val pronunciation = (detailContent.ukPhone ?: detailContent.usPhone)?.let { "/$it/" }
+
                 Word(
                     english = jsonWord.headWord,
-                    chinese = firstTranslation?.chinese ?: "",
-                    pronunciation = detailContent.ukPhone ?: detailContent.usPhone,
-                    definition = firstTranslation?.pos,
-                    example = firstSentence?.content,
-                    exampleTranslation = firstSentence?.translation,
+                    chinese = chineseTranslations, // 将拼接后的中文翻译赋值给chinese字段
+                    pronunciation = pronunciation,
+                    definition = englishDefinitions, // 将拼接后的英文释义赋值给definition字段
+                    example = examples,
+                    exampleTranslation = exampleTranslations,
                     difficulty = 1, // 默认难度
                     category = "vocabulary" // 默认分类
                 )

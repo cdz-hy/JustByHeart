@@ -241,4 +241,13 @@ class StudyViewModel(
             }
         }
     }
+
+    /**
+     * 获取今日已完成的单词ID列表
+     * @return 已完成的单词ID列表
+     */
+    suspend fun getCompletedWordIdsForToday(): List<Long> {
+        val today = getTodayZeroed()
+        return repository.getCompletedWordIdsForDate(today)
+    }
 }

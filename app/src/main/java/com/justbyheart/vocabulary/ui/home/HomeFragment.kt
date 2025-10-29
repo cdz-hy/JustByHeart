@@ -75,6 +75,11 @@ class HomeFragment : Fragment() {
             // 导航到设置片段
             findNavController().navigate(R.id.navigation_settings)
         }
+
+        // 为总进度卡片设置点击监听器
+        binding.cardOverallProgress.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_libraryFragment)
+        }
     }
     
     private fun observeViewModel() {

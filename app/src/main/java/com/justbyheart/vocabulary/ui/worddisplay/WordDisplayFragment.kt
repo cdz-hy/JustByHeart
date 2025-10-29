@@ -51,6 +51,10 @@ class WordDisplayFragment : Fragment() {
         val wordId = args.wordId
         viewModel.loadWord(wordId)
 
+        binding.buttonBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
         observeViewModel()
     }
 

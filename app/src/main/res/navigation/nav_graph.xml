@@ -13,6 +13,9 @@
         <action
             android:id="@+id/action_navigation_home_to_navigation_search"
             app:destination="@id/navigation_search" />
+        <action
+            android:id="@+id/action_homeFragment_to_libraryFragment"
+            app:destination="@id/libraryFragment" />
     </fragment>
 
     <fragment
@@ -75,6 +78,16 @@
         <argument
             android:name="wordId"
             app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/libraryFragment"
+        android:name="com.justbyheart.vocabulary.ui.library.LibraryFragment"
+        android:label="词库"
+        tools:layout="@layout/fragment_library" >
+        <action
+            android:id="@+id/action_libraryFragment_to_wordDisplayFragment"
+            app:destination="@id/wordCardDisplayFragment" />
     </fragment>
 
 </navigation>

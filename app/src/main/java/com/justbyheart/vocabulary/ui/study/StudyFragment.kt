@@ -6,12 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentStudyBinding
+import kotlinx.coroutines.launch
 
 class StudyFragment : Fragment() {
     
@@ -95,11 +97,27 @@ class StudyFragment : Fragment() {
                 // 如果没有翻转的单词，显示提示信息
                 android.widget.Toast.makeText(requireContext(), R.string.select_flipped_word_first, android.widget.Toast.LENGTH_SHORT).show()
             } else {
-                // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
-                val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
-                    viewModel.flippedWords.value!!.toLongArray()
-                )
-                findNavController().navigate(action)
+                lifecycleScope.launch {
+                    // 获取今日已完成的单词ID列表
+                    val completedWordIds = viewModel.getCompletedWordIdsForToday()
+                    
+                    // 过滤掉已完成的单词
+                    val filteredFlippedWords = viewModel.flippedWords.value!!.filter { wordId ->
+                        !completedWordIds.contains(wordId)
+                    }
+                    
+                    // 检查过滤后的单词数量
+                    if (filteredFlippedWords.isEmpty()) {
+                        // 如果没有未完成的翻转单词，显示提示信息
+                        android.widget.Toast.makeText(requireContext(), R.string.select_flipped_word_first, android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
+                        val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
+                            filteredFlippedWords.toLongArray()
+                        )
+                        findNavController().navigate(action)
+                    }
+                }
             }
         }
         

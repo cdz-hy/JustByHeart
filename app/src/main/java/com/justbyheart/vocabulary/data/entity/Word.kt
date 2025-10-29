@@ -13,11 +13,11 @@ import kotlinx.parcelize.Parcelize
  * 
  * @property id 单词的唯一标识符，由数据库自动生成
  * @property english 英文单词
- * @property chinese 中文释义
+ * @property translations 中文释义
  * @property pronunciation 音标发音（可选）
- * @property definition 英文释义（可选）
- * @property example 例句（可选）
- * @property exampleTranslation 例句翻译（可选）
+ * @property englishDefinitions 英文释义（可选）
+ * @property examples 例句 (例句1\n例句2)
+ * @property exampleTranslations 例句翻译 (例句翻译1\n例句翻译2)
  * @property difficulty 难度等级，范围1-5，1为最简单，5为最难
  * @property category 单词分类，如"general"、"academic"、"business"等
  */
@@ -27,11 +27,11 @@ data class Word(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val english: String,                    // 英文单词
-    val chinese: String,                    // 中文释义
+    val chinese: String,               // 中文释义 (pos. 中文翻译；pos. 中文翻译)
     val pronunciation: String? = null,      // 音标发音
-    val definition: String? = null,         // 英文释义
-    val example: String? = null,            // 例句
-    val exampleTranslation: String? = null, // 例句翻译
+    val definition: String? = null, // 英文释义 (pos. 英文释义；pos. 英文释义)
+    val example: String? = null,           // 例句 (例句1\n例句2)
+    val exampleTranslation: String? = null, // 例句翻译 (例句翻译1\n例句翻译2)
     val difficulty: Int = 1,                // 难度等级 (1-5)
     val category: String = "general"        // 单词分类
 ) : Parcelable
