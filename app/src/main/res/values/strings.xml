@@ -51,6 +51,7 @@
     <string name="word_data_initialized">单词数据初始化完成！共加载 %1$d 个单词</string>
     <string name="initialization_failed">初始化失败：%1$s</string>
     <string name="daily_word_count_format">%1$d 个单词/天</string>
+    <string name="today_words_title">今日单词</string>
     
     <!-- Review Fragment -->
     <string name="select_date">选择日期</string>

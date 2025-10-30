@@ -113,6 +113,15 @@
                     android:text="@string/data_management"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
+                <TextView
+                    android:id="@+id/text_initialize_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="应用首次启动时会自动初始化数据"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/button_initialize_data"
                     style="@style/Widget.Material3.Button.OutlinedButton"

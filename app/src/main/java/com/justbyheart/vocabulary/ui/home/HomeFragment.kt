@@ -72,13 +72,23 @@ class HomeFragment : Fragment() {
 
         // 为每日目标卡片设置点击监听器
         binding.cardDailyGoal.setOnClickListener {
-            // 导航到设置片段
-            findNavController().navigate(R.id.navigation_settings)
+            // 导航到今日单词片段
+            viewModel.getTodayWordIds { wordIds ->
+                if (wordIds != null) {
+                    val action = HomeFragmentDirections.actionHomeFragmentToTodayWordsFragment(wordIds)
+                    findNavController().navigate(action)
+                }
+            }
         }
 
         // 为总进度卡片设置点击监听器
         binding.cardOverallProgress.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_libraryFragment)
+        }
+        
+        // 为复习卡片设置点击监听器
+        binding.cardReview.setOnClickListener {
+            findNavController().navigate(R.id.navigation_review)
         }
     }
     

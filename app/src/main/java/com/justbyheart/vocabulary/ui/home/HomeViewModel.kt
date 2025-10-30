@@ -44,6 +44,8 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
     
     private val _overallProgress = MutableLiveData<Pair<Int, Int>>()
     val overallProgress: LiveData<Pair<Int, Int>> = _overallProgress
+    
+    private var todayWordIds: LongArray = longArrayOf()
 
     /**
      * 加载今日学习进度
@@ -67,6 +69,9 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
             val dailyGoal = repository.getDailyGoalByDate(today)
             val targetCount = dailyGoal?.targetWordCount ?: 10
             val dailyWordIds = dailyGoal?.dailyWordIds?.split(",")?.mapNotNull { it.toLongOrNull() } ?: emptyList()
+            
+            // 保存今日单词ID供其他地方使用
+            todayWordIds = dailyWordIds.toLongArray()
 
             val completedCount = if (dailyWordIds.isNotEmpty()) {
                 repository.getCompletedWordsCountForSpecificWords(dailyWordIds, today)
@@ -97,5 +102,9 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
             val total = repository.getTotalWordsCount()
             _overallProgress.postValue(Pair(memorized, total))
         }
+    }
+    
+    fun getTodayWordIds(callback: (LongArray?) -> Unit) {
+        callback(todayWordIds)
     }
 }
