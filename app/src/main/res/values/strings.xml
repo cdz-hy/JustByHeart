@@ -65,4 +65,10 @@
     <string name="cancel">取消</string>
     <string name="confirm">确认</string>
     <string name="save">保存</string>
+    
+    <!-- Audio Player -->
+    <string name="no_network">暂无网络</string>
+    <string name="service_error">服务异常</string>
+    <string name="no_pronunciation">暂无发音</string>
+    <string name="playback_failed">播放失败</string>
 </resources>

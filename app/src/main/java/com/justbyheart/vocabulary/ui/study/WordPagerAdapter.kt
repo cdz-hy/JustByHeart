@@ -2,14 +2,25 @@ package com.justbyheart.vocabulary.ui.study
 
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
+import android.media.MediaPlayer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
+import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.databinding.JustbyheartWordCardBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * 单词页面适配器
@@ -129,6 +140,11 @@ class WordPagerAdapter(
                 onFavoriteClick(word, this.isFavorite)
             }
 
+            // 设置播放按钮点击事件
+            binding.buttonSpeak.setOnClickListener {
+                playPronunciation(word.english)
+            }
+
             // 设置卡片点击事件（用于翻转卡片）
             binding.cardContentLayout.setOnClickListener {
                 flipCard(word)
@@ -147,6 +163,145 @@ class WordPagerAdapter(
          */
         private fun updateFavoriteButton() {
             binding.buttonFavorite.isSelected = isFavorite
+        }
+
+        /**
+         * 播放单词发音
+         */
+        private fun playPronunciation(word: String) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    val audioUrl = fetchAudioUrl(word)
+//                    println("Received audio URL: $audioUrl")
+                    if (audioUrl != null) {
+                        playAudio(audioUrl)
+                    } else {
+                        Toast.makeText(itemView.context, R.string.no_pronunciation, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: IOException) {
+                    Toast.makeText(itemView.context, R.string.no_network, Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(itemView.context, R.string.service_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        /**
+         * 获取单词发音的音频链接
+         */
+        private suspend fun fetchAudioUrl(word: String): String? = withContext(Dispatchers.IO) {
+            try {
+                val url = URL("https://api.dictionaryapi.dev/api/v2/entries/en/$word")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 5000
+                connection.readTimeout = 5000
+                
+                val responseCode = connection.responseCode
+                if (responseCode == 200) {
+                    // 读取响应内容
+                    val inputStream = connection.inputStream
+                    val response = inputStream.bufferedReader().use { it.readText() }
+                    inputStream.close()
+                    
+                    // 解析JSON获取audio字段
+                    val audioUrl = parseAudioFromJson(response)
+                    return@withContext audioUrl
+                }
+            } catch (e: Exception) {
+                // 异常会被上层捕获并处理
+            }
+            null
+        }
+        
+        /**
+         * 从JSON响应中解析audio字段
+         */
+        private fun parseAudioFromJson(jsonResponse: String): String? {
+            return try {
+                val gson = Gson()
+                val jsonArray = gson.fromJson(jsonResponse, Array<DictionaryResponse>::class.java)
+                
+                if (jsonArray.isNotEmpty()) {
+                    val phonetics = jsonArray[0].phonetics
+                    if (phonetics != null && phonetics.isNotEmpty()) {
+                        // 查找包含audio的phonetic对象
+                        for ((index, phonetic) in phonetics.withIndex()) {
+                            if (!phonetic.audio.isNullOrEmpty()) {
+                                // 检查audio字段是否是完整URL
+                                val audioUrl = phonetic.audio
+                                val finalUrl = if (audioUrl!!.startsWith("//")) {
+                                    "https:$audioUrl"
+                                } else if (audioUrl.startsWith("/")) {
+                                    "https://api.dictionaryapi.dev$audioUrl"
+                                } else {
+                                    audioUrl
+                                }
+                                return finalUrl
+                            }
+                        }
+                    }
+                }
+                null
+            } catch (e: Exception) {
+                null
+            }
+        }
+        
+        /**
+         * Dictionary API响应数据类
+         */
+        private data class DictionaryResponse(
+            val word: String,
+            val phonetics: Array<Phonetic>?
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as DictionaryResponse
+
+                if (word != other.word) return false
+                if (phonetics != null) {
+                    if (other.phonetics == null) return false
+                    if (!phonetics.contentEquals(other.phonetics)) return false
+                } else if (other.phonetics != null) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = word.hashCode()
+                result = 31 * result + (phonetics?.contentHashCode() ?: 0)
+                return result
+            }
+        }
+        
+        private data class Phonetic(
+            val text: String?,
+            val audio: String?
+        )
+
+        /**
+         * 播放音频
+         */
+        private fun playAudio(audioUrl: String) {
+            val mediaPlayer = MediaPlayer()
+            mediaPlayer.setOnCompletionListener { it.release() }
+            mediaPlayer.setOnErrorListener { mp, _, _ ->
+                mp.release()
+                Toast.makeText(itemView.context, R.string.playback_failed, Toast.LENGTH_SHORT).show()
+                false
+            }
+
+            try {
+                mediaPlayer.setDataSource(audioUrl)
+                mediaPlayer.prepareAsync()
+                mediaPlayer.setOnPreparedListener { it.start() }
+            } catch (e: Exception) {
+                mediaPlayer.release()
+                Toast.makeText(itemView.context, R.string.playback_failed, Toast.LENGTH_SHORT).show()
+            }
         }
 
         /**
