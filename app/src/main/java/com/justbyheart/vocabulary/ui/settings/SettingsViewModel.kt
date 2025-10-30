@@ -42,4 +42,12 @@ class SettingsViewModel(private val repository: WordRepository) : ViewModel() {
             _isLoading.value = false
         }
     }
+    
+    suspend fun getWordCount(): Int {
+        return repository.getTotalWordsCount()
+    }
+    
+    suspend fun clearAllWords() {
+        repository.deleteAllWords()
+    }
 }

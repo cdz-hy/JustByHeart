@@ -60,6 +60,11 @@ class WordRepository(
      */
     suspend fun insertWords(words: List<Word>) = wordDao.insertWords(words)
     
+    /**
+     * 删除所有单词
+     */
+    suspend fun deleteAllWords() = wordDao.deleteAllWords()
+    
     // ==================== 学习记录相关操作 ====================
     
     /**

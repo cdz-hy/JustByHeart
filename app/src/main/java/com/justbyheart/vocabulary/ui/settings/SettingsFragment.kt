@@ -74,6 +74,7 @@ class SettingsFragment : Fragment() {
         setupUI()
         observeViewModel()
         loadSettings() // 加载已保存的设置
+        checkInitializationStatus() // 检查数据初始化状态
     }
     
     /**
@@ -134,14 +135,46 @@ class SettingsFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
+                // 先清空现有单词数据
+                viewModel.clearAllWords()
+                binding.textInitializeStatus.text = "正在清空数据库..."
+                
                 // 从assets目录加载单词数据
                 val words = WordDataLoader.loadWordsFromAssets(requireContext())
                 viewModel.initializeWords(words)
                 binding.textInitializeStatus.text = getString(R.string.word_data_initialized, words.size)
+                
+                // 标记数据已初始化
+                sharedPreferences.edit()
+                    .putBoolean("data_initialized", true)
+                    .apply()
             } catch (e: Exception) {
                 binding.textInitializeStatus.text = getString(R.string.initialization_failed, e.message)
             } finally {
                 binding.buttonInitializeData.isEnabled = true
+            }
+        }
+    }
+    
+    /**
+     * 检查数据初始化状态
+     */
+    private fun checkInitializationStatus() {
+        val isDataInitialized = sharedPreferences.getBoolean("data_initialized", false)
+        if (isDataInitialized) {
+            // 如果数据已经初始化，禁用按钮并显示提示
+            binding.buttonInitializeData.isEnabled = false
+            binding.buttonInitializeData.text = getString(R.string.data_already_initialized)
+            
+            // 显示初始化状态
+            lifecycleScope.launch {
+                try {
+                    val wordCount = viewModel.getWordCount()
+                    binding.textInitializeStatus.text = getString(R.string.word_data_initialized, wordCount)
+                    binding.textInitializeStatus.visibility = View.VISIBLE
+                } catch (e: Exception) {
+                    // 如果获取单词数量失败，保持原状态
+                }
             }
         }
     }

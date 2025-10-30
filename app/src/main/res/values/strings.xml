@@ -50,6 +50,7 @@
     <string name="initializing_word_data">正在初始化单词数据...</string>
     <string name="word_data_initialized">单词数据初始化完成！共加载 %1$d 个单词</string>
     <string name="initialization_failed">初始化失败：%1$s</string>
+    <string name="data_already_initialized">单词已经初始化</string>
     <string name="daily_word_count_format">%1$d 个单词/天</string>
     <string name="today_words_title">今日单词</string>
     
