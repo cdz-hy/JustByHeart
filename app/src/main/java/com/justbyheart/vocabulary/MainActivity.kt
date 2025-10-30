@@ -8,6 +8,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.ActivityMainBinding
 
 /**
@@ -122,5 +123,14 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+    
+    /**
+     * 获取WordRepository实例
+     * 
+     * @return WordRepository实例
+     */
+    fun getRepository(): WordRepository {
+        return (application as VocabularyApplication).repository
     }
 }

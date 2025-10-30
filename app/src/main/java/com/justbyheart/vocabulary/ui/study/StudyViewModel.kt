@@ -215,34 +215,6 @@ class StudyViewModel(
     }
 
     /**
-     * 标记今日学习为完成状态
-     * 
-     * 更新今日学习目标的完成情况，
-     * 将已完成单词数设置为实际学习的单词数。
-     */
-    fun markTodayComplete() {
-        viewModelScope.launch {
-            // 获取今日零点时间
-            val today = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.time
-            
-            // 更新今日学习目标的完成状态
-            val dailyGoal = repository.getDailyGoalByDate(today)
-            dailyGoal?.let { goal ->
-                val updatedGoal = goal.copy(
-                    completedWordCount = _todayWords.value?.size ?: 0,
-                    isCompleted = true
-                )
-                repository.updateDailyGoal(updatedGoal)
-            }
-        }
-    }
-
-    /**
      * 获取今日已完成的单词ID列表
      * @return 已完成的单词ID列表
      */

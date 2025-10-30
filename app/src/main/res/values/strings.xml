@@ -23,10 +23,13 @@
     <string name="previous_word">上一个</string>
     <string name="add_to_favorites">收藏</string>
     <string name="remove_from_favorites">取消收藏</string>
-    <string name="start_test">开始测试</string>
+    <string name="start_test">检测</string>
     <string name="select_flipped_word_first">请先点击单词卡片选择待测单词~</string>
     <string name="word_not_found">单词未找到</string>
     <string name="study_progress_format">%1$d/%2$d</string>
+    <string name="word_marked_as_memorized">单词已标记为掌握</string>
+    <string name="word_unmarked_as_memorized">单词已取消掌握标记</string>
+    <string name="daily_task_completed">今日任务已完成</string>
     
     <!-- Test Fragment -->
     <string name="test_instruction">请选择正确答案</string>

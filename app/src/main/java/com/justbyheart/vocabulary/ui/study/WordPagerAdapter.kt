@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.justbyheart.vocabulary.R
+import com.justbyheart.vocabulary.data.entity.StudyRecord
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.databinding.JustbyheartWordCardBinding
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Calendar
 
 /**
  * 单词页面适配器
@@ -97,6 +99,8 @@ class WordPagerAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private var isFavorite: Boolean = false
+        private var isMemorized: Boolean = false
+        private lateinit var word: Word
 
         /**
          * 绑定单词数据到视图
@@ -105,6 +109,7 @@ class WordPagerAdapter(
          * @param isFlipped 单词卡片是否已翻转
          */
         fun bind(word: Word, isFavorite: Boolean, isFlipped: Boolean) {
+            this.word = word
             this.isFavorite = isFavorite
             // 绑定单词各项信息到对应视图组件
             binding.textEnglish.text = word.english
@@ -140,9 +145,11 @@ class WordPagerAdapter(
                 onFavoriteClick(word, this.isFavorite)
             }
 
-            // 设置播放按钮点击事件
-            binding.buttonSpeak.setOnClickListener {
-                playPronunciation(word.english)
+            // 设置已背按钮点击事件
+            binding.layoutMemorized.setOnClickListener {
+                this.isMemorized = !this.isMemorized
+                updateMemorizedButton()
+                markWordAsMemorized(word, this.isMemorized)
             }
 
             // 设置卡片点击事件（用于翻转卡片）
@@ -151,6 +158,7 @@ class WordPagerAdapter(
             }
 
             updateFavoriteButton()
+            updateMemorizedButton()
         }
 
         fun updateFavoriteStatus(isFavorite: Boolean) {
@@ -163,6 +171,85 @@ class WordPagerAdapter(
          */
         private fun updateFavoriteButton() {
             binding.buttonFavorite.isSelected = isFavorite
+        }
+
+        /**
+         * 更新已背按钮状态
+         */
+        private fun updateMemorizedButton() {
+            binding.buttonMemorized.isSelected = isMemorized
+            binding.layoutMemorized.isSelected = isMemorized
+        }
+
+        /**
+         * 标记单词为已背
+         */
+        private fun markWordAsMemorized(word: Word, isMemorized: Boolean) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    // 获取今日零点时间
+                    val today = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.time
+
+                    // 通过Activity获取repository
+                    val activity = getActivityFromContext(itemView.context)
+                    if (activity is com.justbyheart.vocabulary.MainActivity) {
+                        val repository = activity.getRepository()
+                        
+                        // 创建或更新学习记录
+                        val record = repository.getStudyRecordByWordIdAndDate(word.id, today) ?: StudyRecord(
+                            wordId = word.id,
+                            studyDate = today
+                        )
+
+                        val updatedRecord = if (isMemorized) {
+                            // 如果标记为已背，则设置为掌握状态
+                            record.copy(
+                                correctCount = 0,  // 设置为0，表示直接标记为已背
+                                wrongCount = 0,
+                                isCompleted = true
+                            )
+                        } else {
+                            // 如果取消标记为已背，则设置为未掌握状态
+                            record.copy(
+                                correctCount = 0,
+                                wrongCount = 0,
+                                isCompleted = false
+                            )
+                        }
+
+                        repository.insertStudyRecord(updatedRecord)
+
+                        // 显示提示信息
+                        val message = if (isMemorized) {
+                            itemView.context.getString(R.string.word_marked_as_memorized)
+                        } else {
+                            itemView.context.getString(R.string.word_unmarked_as_memorized)
+                        }
+                        Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(itemView.context, R.string.service_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        /**
+         * 从Context获取Activity
+         */
+        private fun getActivityFromContext(context: android.content.Context): android.app.Activity? {
+            var currentContext = context
+            while (currentContext is android.content.ContextWrapper) {
+                if (currentContext is android.app.Activity) {
+                    return currentContext
+                }
+                currentContext = currentContext.baseContext
+            }
+            return null
         }
 
         /**

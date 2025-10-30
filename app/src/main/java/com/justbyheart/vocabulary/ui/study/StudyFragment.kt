@@ -148,6 +148,15 @@ class StudyFragment : Fragment() {
                 }
             }
             
+            // 控制 ViewPager 和提示文本的显示
+            if (words.isEmpty()) {
+                binding.viewPagerWords.visibility = View.GONE
+                binding.textNoWords.visibility = View.VISIBLE
+            } else {
+                binding.viewPagerWords.visibility = View.VISIBLE
+                binding.textNoWords.visibility = View.GONE
+            }
+            
             binding.buttonStartTest.visibility = if (words.isNotEmpty()) View.VISIBLE else View.GONE
         }
         
@@ -160,14 +169,14 @@ class StudyFragment : Fragment() {
             binding.buttonPrevious.isEnabled = position > 0
             binding.buttonNext.isEnabled = position < totalWords - 1
             
-            if (position == totalWords - 1 && totalWords > 0) {
-                viewModel.markTodayComplete()
-            }
         }
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            binding.viewPagerWords.visibility = if (isLoading) View.GONE else View.VISIBLE
+            if (isLoading) {
+                binding.viewPagerWords.visibility = View.GONE
+                binding.textNoWords.visibility = View.GONE
+            }
         }
 
         // 观察收藏单词列表的变化

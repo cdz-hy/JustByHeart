@@ -147,11 +147,50 @@
                 app:layout_constraintTop_toBottomOf="@id/text_example"
                 tools:text="他们不得不把车丢在雪地里。" />
 
+            <!-- 添加"已背"图标 -->
+            <LinearLayout
+                android:id="@+id/layout_memorized"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/selector_memorized_background"
+                android:padding="6dp"
+                android:layout_margin="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+                
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_memorized"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:icon="@drawable/selector_memorized_icon"
+                    app:iconSize="16dp"
+                    app:iconGravity="textStart"
+                    app:iconTint="?attr/colorOnPrimary" />
+                    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="已背"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:layout_marginStart="4dp"
+                    android:layout_gravity="center"/>
+                    
+            </LinearLayout>
             <androidx.constraintlayout.widget.Group
                 android:id="@+id/front_of_card_group"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:constraint_referenced_ids="text_english,text_pronunciation,button_speak,text_chinese,divider1,label_definition,text_definition,label_example,text_example,text_example_translation" />
+                app:constraint_referenced_ids="text_english,text_pronunciation,button_speak,text_chinese,divider1,label_definition,text_definition,label_example,text_example,text_example_translation,button_memorized" />
 
             <TextView
                 android:id="@+id/back_of_card"
