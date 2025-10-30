@@ -32,6 +32,8 @@ data class Word(
     val definition: String? = null, // 英文释义 (pos. 英文释义；pos. 英文释义)
     val example: String? = null,           // 例句 (例句1\n例句2)
     val exampleTranslation: String? = null, // 例句翻译 (例句翻译1\n例句翻译2)
-    val difficulty: Int = 1,                // 难度等级 (1-5)
+    val synos: String? = null,              // 同义词 (JSON字符串)
+    val phrases: String? = null,            // 短语 (JSON字符串)
+    val relWord: String? = null,            // 同根词 (JSON字符串)
     val category: String = "general"        // 单词分类
 ) : Parcelable

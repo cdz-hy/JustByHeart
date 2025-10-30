@@ -42,16 +42,7 @@ interface WordDao {
      */
     @Query("SELECT * FROM words ORDER BY RANDOM() LIMIT :count")
     suspend fun getRandomWords(count: Int): List<Word>
-
-    /**
-     * 根据难度等级随机获取单词
-     * @param difficulty 难度等级 (1-5)
-     * @param count 需要获取的单词数量
-     * @return 指定难度的随机单词列表
-     */
-    @Query("SELECT * FROM words WHERE difficulty = :difficulty ORDER BY RANDOM() LIMIT :count")
-    suspend fun getRandomWordsByDifficulty(difficulty: Int, count: Int): List<Word>
-
+    
     /**
      * 根据分类随机获取单词
      * @param category 单词分类 (如 "general", "academic" 等)

@@ -37,7 +37,13 @@ data class JsonWordDetailContent(
     @SerializedName("trans")
     val translations: List<JsonTranslation>?,
     @SerializedName("sentence")
-    val sentence: JsonSentence?
+    val sentence: JsonSentence?,
+    @SerializedName("syno")
+    val synos: JsonSynos?,
+    @SerializedName("phrase")
+    val phrases: JsonPhrases?,
+    @SerializedName("relWord")
+    val relWord: JsonRelWord?
 )
 
 data class JsonTranslation(
@@ -59,6 +65,56 @@ data class JsonSentenceDetail(
     val content: String?,
     @SerializedName("sCn")
     val translation: String?
+)
+
+data class JsonSynos(
+    @SerializedName("synos")
+    val synos: List<JsonSynoDetail>?
+)
+
+data class JsonSynoDetail(
+    @SerializedName("pos")
+    val pos: String?,
+    @SerializedName("tran")
+    val tran: String?,
+    @SerializedName("hwds")
+    val hwds: List<JsonHwd>?
+)
+
+data class JsonHwd(
+    @SerializedName("w")
+    val w: String?
+)
+
+data class JsonPhrases(
+    @SerializedName("phrases")
+    val phrases: List<JsonPhraseDetail>?
+)
+
+data class JsonPhraseDetail(
+    @SerializedName("pContent")
+    val pContent: String?,
+    @SerializedName("pCn")
+    val pCn: String?
+)
+
+data class JsonRelWord(
+    @SerializedName("rels")
+    val rels: List<JsonRelDetail>?
+)
+
+data class JsonRelDetail(
+    @SerializedName("pos")
+    val pos: String?,
+    @SerializedName("words")
+    val words: List<JsonRelWordDetail>?
+)
+
+data class JsonRelWordDetail(
+    @SerializedName("hwd")
+    val hwd: String?,
+    @SerializedName("tran")
+    val tran: String?
 )
 
 object WordDataLoader {
@@ -97,15 +153,22 @@ object WordDataLoader {
                 // 格式化音标
                 val pronunciation = (detailContent.ukPhone ?: detailContent.usPhone)?.let { "/$it/" }
 
+                // 转换同义词、短语、同根词为JSON字符串
+                val synosJson = gson.toJson(detailContent.synos?.synos)
+                val phrasesJson = gson.toJson(detailContent.phrases?.phrases)
+                val relWordJson = gson.toJson(detailContent.relWord?.rels)
+
                 Word(
                     english = jsonWord.headWord,
-                    chinese = chineseTranslations, // 将拼接后的中文翻译赋值给chinese字段
+                    chinese = chineseTranslations,
                     pronunciation = pronunciation,
-                    definition = englishDefinitions, // 将拼接后的英文释义赋值给definition字段
+                    definition = englishDefinitions,
                     example = examples,
                     exampleTranslation = exampleTranslations,
-                    difficulty = 1, // 默认难度
-                    category = "vocabulary" // 默认分类
+                    synos = synosJson,
+                    phrases = phrasesJson,
+                    relWord = relWordJson,
+                    category = "vocabulary"
                 )
             }
         } catch (e: IOException) {

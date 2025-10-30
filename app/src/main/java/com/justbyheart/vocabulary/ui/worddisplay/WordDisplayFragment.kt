@@ -100,6 +100,13 @@ class WordDisplayFragment : Fragment() {
                     formattedExamples.append(exampleTranslations[i]).append("\n\n")
                 }
                 binding.textExample.text = formattedExamples.toString().trimEnd() // Remove trailing newlines
+
+                // Parse and display synos, phrases, and relWord
+                val gson = Gson()
+                binding.textSynos.text = parseSynos(gson, word.synos)
+                binding.textPhrases.text = parsePhrases(gson, word.phrases)
+                binding.textRelWord.text = parseRelWord(gson, word.relWord)
+
             } else {
                 Toast.makeText(context, R.string.word_not_found, Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
@@ -112,6 +119,37 @@ class WordDisplayFragment : Fragment() {
         viewModel.isFavorite.observe(viewLifecycleOwner) { isFavorite ->
             binding.buttonFavorite.isSelected = isFavorite
         }
+    }
+
+    private fun parseSynos(gson: Gson, json: String?): String {
+        if (json == null) return ""
+        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonSynoDetail::class.java).type
+        val synos: List<com.justbyheart.vocabulary.utils.JsonSynoDetail> = gson.fromJson(json, type)
+        return synos.joinToString("\n") { syno ->
+            val hwds = syno.hwds?.joinToString(", ") { it.w ?: "" } ?: ""
+            "${syno.pos ?: ""}. ${syno.tran ?: ""} - [${hwds}]"
+        }
+    }
+
+    private fun parsePhrases(gson: Gson, json: String?): String {
+        if (json == null) return ""
+        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonPhraseDetail::class.java).type
+        val phrases: List<com.justbyheart.vocabulary.utils.JsonPhraseDetail> = gson.fromJson(json, type)
+        return phrases.joinToString("\n") { "${it.pContent ?: ""} - ${it.pCn ?: ""}" }
+    }
+
+    private fun parseRelWord(gson: Gson, json: String?): String {
+        if (json == null) return ""
+        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonRelDetail::class.java).type
+        val rels: List<com.justbyheart.vocabulary.utils.JsonRelDetail> = gson.fromJson(json, type)
+        val builder = StringBuilder()
+        rels.forEach { rel ->
+            builder.append("${rel.pos ?: ""}.\n")
+            rel.words?.forEach { word ->
+                builder.append("  - ${word.hwd ?: ""}: (${word.tran ?: ""})\n")
+            }
+        }
+        return builder.toString().trimEnd()
     }
 
     override fun onDestroyView() {

@@ -25,7 +25,7 @@ import com.justbyheart.vocabulary.data.entity.*
         FavoriteWord::class,   // 收藏单词实体
         DailyGoal::class       // 每日目标实体
     ],
-    version = 1,               // 数据库版本号
+    version = 2,               // 数据库版本号
     exportSchema = false       // 不导出数据库架构
 )
 @TypeConverters(DateConverter::class)  // 使用日期转换器处理Date类型
