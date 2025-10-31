@@ -54,6 +54,10 @@ class MainActivity : AppCompatActivity() {
      * 初始化界面布局和导航组件
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+        val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
+        val themeName = sharedPreferences.getString("theme", "Theme.JustByHeartVocabulary")
+        setTheme(resources.getIdentifier(themeName, "style", packageName))
+
         super.onCreate(savedInstanceState)
         
         // 初始化ViewBinding
@@ -80,8 +84,7 @@ class MainActivity : AppCompatActivity() {
             onBackPressedCallback.isEnabled = destination.id in rootDestinations
         }
         
-        // 检查是否已初始化数据
-        val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
+
         val isDataInitialized = sharedPreferences.getBoolean("data_initialized", false)
         
         if (!isDataInitialized) {
@@ -138,6 +141,10 @@ class MainActivity : AppCompatActivity() {
                     .apply()
 
                 Toast.makeText(this@MainActivity, "词库初始化完成", Toast.LENGTH_SHORT).show()
+                
+                // 发送广播通知首页刷新数据
+                val intent = android.content.Intent("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
+                sendBroadcast(intent)
             } catch (e: Exception) {
                 // 出错时显示错误信息并重新选择
                 AlertDialog.Builder(this@MainActivity)

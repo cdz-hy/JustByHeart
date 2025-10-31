@@ -31,4 +31,30 @@
     <color name="success_green">#4CAF50</color>
     <color name="warning_orange">#FF9800</color>
     <color name="error_red">#F44336</color>
+
+    <!-- Morandi Colors -->
+    <color name="morandi_blue_primary">#6C8EAD</color>
+    <color name="morandi_blue_onPrimary">#FFFFFF</color>
+    <color name="morandi_blue_primaryContainer">#D1E4F8</color>
+    <color name="morandi_blue_onPrimaryContainer">#001D33</color>
+
+    <color name="morandi_green_primary">#7E9978</color>
+    <color name="morandi_green_onPrimary">#FFFFFF</color>
+    <color name="morandi_green_primaryContainer">#D3EED1</color>
+    <color name="morandi_green_onPrimaryContainer">#121F11</color>
+
+    <color name="morandi_pink_primary">#B98390</color>
+    <color name="morandi_pink_onPrimary">#FFFFFF</color>
+    <color name="morandi_pink_primaryContainer">#FFD9E1</color>
+    <color name="morandi_pink_onPrimaryContainer">#3E001E</color>
+
+    <color name="morandi_grey_primary">#8D918D</color>
+    <color name="morandi_grey_onPrimary">#FFFFFF</color>
+    <color name="morandi_grey_primaryContainer">#E3E3E3</color>
+    <color name="morandi_grey_onPrimaryContainer">#1C1F1C</color>
+
+    <color name="morandi_brown_primary">#A08A76</color>
+    <color name="morandi_brown_onPrimary">#FFFFFF</color>
+    <color name="morandi_brown_primaryContainer">#F8E2CF</color>
+    <color name="morandi_brown_onPrimaryContainer">#2C1A0B</color>
 </resources>

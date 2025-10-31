@@ -144,6 +144,19 @@ class SettingsFragment : Fragment() {
         binding.buttonImportData.setOnClickListener {
             selectFileLauncher.launch("*/*")
         }
+
+        // 设置主题切换按钮的点击事件
+        binding.themeDefault.setOnClickListener { saveAndApplyTheme("Theme.JustByHeartVocabulary") }
+        binding.themeMorandiBlue.setOnClickListener { saveAndApplyTheme("Theme.JustByHeart.MorandiBlue") }
+        binding.themeMorandiGreen.setOnClickListener { saveAndApplyTheme("Theme.JustByHeart.MorandiGreen") }
+        binding.themeMorandiPink.setOnClickListener { saveAndApplyTheme("Theme.JustByHeart.MorandiPink") }
+        binding.themeMorandiGrey.setOnClickListener { saveAndApplyTheme("Theme.JustByHeart.MorandiGrey") }
+        binding.themeMorandiBrown.setOnClickListener { saveAndApplyTheme("Theme.JustByHeart.MorandiBrown") }
+    }
+
+    private fun saveAndApplyTheme(themeName: String) {
+        sharedPreferences.edit().putString("theme", themeName).apply()
+        requireActivity().recreate()
     }
     
     /**
@@ -384,6 +397,10 @@ class SettingsFragment : Fragment() {
                     
                 // 更新显示的单词总数
                 updateWordCountDisplay()
+                
+                // 发送广播通知首页刷新数据
+                val intent = android.content.Intent("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
+                requireActivity().sendBroadcast(intent)
             } catch (e: Exception) {
                 binding.textInitializeStatus.text = getString(R.string.initialization_failed, e.message)
             } finally {
