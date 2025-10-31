@@ -97,9 +97,7 @@ class WordPagerAdapter(
      */
     override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
         val word = getItem(position)
-        holder.bind(word, favoriteWords.contains(word.id), flippedWords.contains(word.id))
-        // 设置已背状态
-        holder.updateMemorizedStatus(memorizedWords.contains(word.id))
+        holder.bind(word, favoriteWords.contains(word.id), flippedWords.contains(word.id), memorizedWords.contains(word.id))
     }
 
     override fun onBindViewHolder(holder: WordViewHolder, position: Int, payloads: MutableList<Any>) {
@@ -133,27 +131,12 @@ class WordPagerAdapter(
          * @param word 要显示的单词对象
          * @param isFavorite 单词是否被收藏
          * @param isFlipped 单词卡片是否已翻转
+         * @param isMemorized 单词是否已标记为已背
          */
-        fun bind(word: Word, isFavorite: Boolean, isFlipped: Boolean) {
+        fun bind(word: Word, isFavorite: Boolean, isFlipped: Boolean, isMemorized: Boolean) {
             this.word = word
             this.isFavorite = isFavorite
-            // 检查单词是否已经被标记为已背
-            CoroutineScope(Dispatchers.Main).launch {
-                val activity = getActivityFromContext(itemView.context)
-                if (activity is com.justbyheart.vocabulary.MainActivity) {
-                    val repository = activity.getRepository()
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.time
-                    
-                    val record = repository.getStudyRecordByWordIdAndDate(word.id, today)
-                    this@WordViewHolder.isMemorized = record?.isCompleted == true && record.correctCount == 0 && record.wrongCount == 0
-                    updateMemorizedButton()
-                }
-            }
+            this.isMemorized = isMemorized
             
             // 绑定单词各项信息到对应视图组件
             binding.textEnglish.text = word.english
@@ -191,34 +174,7 @@ class WordPagerAdapter(
 
             // 设置已背按钮点击事件
             binding.layoutMemorized.setOnClickListener {
-                this.isMemorized = !this.isMemorized
-                updateMemorizedButton()
-                markWordAsMemorized(word, this.isMemorized)
-                // 通知适配器更新已背状态
-                val activity = getActivityFromContext(itemView.context)
-                if (activity is com.justbyheart.vocabulary.MainActivity) {
-                    val repository = activity.getRepository()
-                    CoroutineScope(Dispatchers.Main).launch {
-                        val today = Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.time
-                        
-                        val memorizedWords = repository.getMemorizedWordsByDate(today)
-                        // 使用正确的方式获取适配器并更新已背单词列表
-                        val recyclerView = binding.root.parent as? RecyclerView
-                        val adapter = recyclerView?.adapter as? WordPagerAdapter
-                        adapter?.setMemorizedWords(memorizedWords)
-                        
-                        // 更新当前item的状态
-                        val currentPosition = bindingAdapterPosition
-                        if (currentPosition != RecyclerView.NO_POSITION) {
-                            adapter?.notifyItemChanged(currentPosition, "memorized")
-                        }
-                    }
-                }
+                markWordAsMemorized(word, !this.isMemorized)
             }
 
             // 设置播放按钮点击事件
@@ -232,6 +188,7 @@ class WordPagerAdapter(
             }
 
             updateFavoriteButton()
+            updateMemorizedButton()
         }
 
         fun updateFavoriteStatus(isFavorite: Boolean) {
@@ -265,7 +222,11 @@ class WordPagerAdapter(
         /**
          * 标记单词为已背
          */
-        private fun markWordAsMemorized(word: Word, isMemorized: Boolean) {
+        private fun markWordAsMemorized(word: Word, shouldBeMemorized: Boolean) {
+            // 立即更新UI状态
+            this.isMemorized = shouldBeMemorized
+            updateMemorizedButton()
+            
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     // 通过Activity获取repository
@@ -286,7 +247,7 @@ class WordPagerAdapter(
                             studyDate = today
                         )
 
-                        val updatedRecord = if (isMemorized) {
+                        val updatedRecord = if (shouldBeMemorized) {
                             // 如果标记为已背，则设置为掌握状态
                             record.copy(
                                 correctCount = 0,  // 设置为0，表示直接标记为已背
@@ -305,7 +266,7 @@ class WordPagerAdapter(
                         repository.insertStudyRecord(updatedRecord)
 
                         // 显示提示信息
-                        val message = if (isMemorized) {
+                        val message = if (shouldBeMemorized) {
                             itemView.context.getString(R.string.word_marked_as_memorized)
                         } else {
                             itemView.context.getString(R.string.word_unmarked_as_memorized)
@@ -313,6 +274,10 @@ class WordPagerAdapter(
                         Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
+                    // 如果操作失败，恢复UI状态
+                    // 在协程作用域中，我们需要使用外部变量的引用
+                    this@WordViewHolder.isMemorized = !shouldBeMemorized
+                    this@WordViewHolder.updateMemorizedButton()
                     Toast.makeText(itemView.context, R.string.service_error, Toast.LENGTH_SHORT).show()
                 }
             }

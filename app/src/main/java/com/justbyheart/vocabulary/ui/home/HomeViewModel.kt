@@ -51,8 +51,10 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
     // SharedPreferences常量
     private companion object {
         const val PREFS_NAME = "vocabulary_settings"
+        const val KEY_DAILY_WORD_COUNT = "daily_word_count"   // 每日单词数键名
         const val KEY_CURRENT_WORD_BANK = "current_word_bank"
         const val DEFAULT_WORD_BANK = "六级核心"
+        const val DEFAULT_DAILY_WORD_COUNT = 10               // 默认每日单词数
     }
 
     /**
@@ -69,6 +71,9 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
                 // 获取当前词库
                 val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+                
+                // 获取用户设置的每日单词数
+                val userSetDailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
                 
                 // 获取今日零点时间，用于查询今日目标
                 val today = Calendar.getInstance().apply {
@@ -92,10 +97,10 @@ class HomeViewModel(private val repository: WordRepository) : ViewModel() {
                 }
                 
                 if (dailyGoal == null) {
-                    // 如果今日没有目标记录，创建默认目标
-                    val newGoal = DailyGoal(date = today, targetWordCount = 10)
+                    // 如果今日没有目标记录，创建默认目标（使用用户设置的单词数）
+                    val newGoal = DailyGoal(date = today, targetWordCount = userSetDailyWordCount)
                     repository.insertDailyGoal(newGoal)
-                    _dailyProgress.postValue(DailyProgress(target = 10, completed = completedCount))
+                    _dailyProgress.postValue(DailyProgress(target = userSetDailyWordCount, completed = completedCount))
                 } else {
                     // 检查目标中的单词是否都属于当前词库
                     if (dailyWordIds.isNotEmpty()) {

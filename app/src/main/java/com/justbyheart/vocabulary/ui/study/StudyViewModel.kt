@@ -57,8 +57,10 @@ class StudyViewModel(
     // SharedPreferences常量
     private companion object {
         const val PREFS_NAME = "vocabulary_settings"
+        const val KEY_DAILY_WORD_COUNT = "daily_word_count"   // 每日单词数键名
         const val KEY_CURRENT_WORD_BANK = "current_word_bank"
         const val DEFAULT_WORD_BANK = "六级核心"
+        const val DEFAULT_DAILY_WORD_COUNT = 10               // 默认每日单词数
     }
     
     /**
@@ -74,6 +76,9 @@ class StudyViewModel(
             // 获取当前词库
             val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+            
+            // 获取用户设置的每日单词数
+            val userSetDailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
 
             var dailyGoal = repository.getDailyGoalByDate(today)
             var currentDailyWordIds: List<Long>
@@ -81,12 +86,12 @@ class StudyViewModel(
             // 如果今日目标不存在，或者每日单词ID列表为空，则生成新的今日单词列表并保存
             if (dailyGoal == null || dailyGoal.dailyWordIds.isEmpty()) {
                 // 从当前词库中获取未完成的单词（按ID排序，获取最早添加的单词）
-                val newWords = repository.getUncompletedWordsByWordBankOrdered(currentWordBank, dailyGoal?.targetWordCount ?: 10)
+                val newWords = repository.getUncompletedWordsByWordBankOrdered(currentWordBank, dailyGoal?.targetWordCount ?: userSetDailyWordCount)
                 currentDailyWordIds = newWords.map { it.id }
                 
                 val updatedGoal = (dailyGoal ?: DailyGoal(date = today)).copy(
                     dailyWordIds = currentDailyWordIds.joinToString(","),
-                    targetWordCount = dailyGoal?.targetWordCount ?: 10,
+                    targetWordCount = dailyGoal?.targetWordCount ?: userSetDailyWordCount,
                     flippedWordIds = dailyGoal?.flippedWordIds ?: ""
                 )
                 repository.insertDailyGoal(updatedGoal)
@@ -311,5 +316,15 @@ class StudyViewModel(
         
         // 筛选出属于当前词库的单词
         return words.filter { it.wordBank == currentWordBank }.map { it.id }
+    }
+    
+    /**
+     * 获取指定日期标记为已背的单词
+     * 
+     * @param date 指定日期
+     * @return 已背的单词列表
+     */
+    suspend fun getMemorizedWordsByDate(date: Date): List<Word> {
+        return repository.getMemorizedWordsByDate(date)
     }
 }

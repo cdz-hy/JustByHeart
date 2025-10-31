@@ -14,6 +14,7 @@ import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentStudyBinding
 import kotlinx.coroutines.launch
+import java.util.*
 
 class StudyFragment : Fragment() {
     
@@ -57,6 +58,18 @@ class StudyFragment : Fragment() {
     
     override fun onResume() {
         super.onResume()
+        // 当Fragment恢复时，重新加载已背单词
+        lifecycleScope.launch {
+            val today = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.time
+            
+            val memorizedWords = viewModel.getMemorizedWordsByDate(today)
+            wordAdapter.setMemorizedWords(memorizedWords)
+        }
         viewModel.loadTodayWords(requireContext())
     }
     
@@ -167,6 +180,19 @@ class StudyFragment : Fragment() {
                     if (words.isNotEmpty()) {
                         binding.textProgress.text = getString(R.string.study_progress_format, 1, words.size)
                         viewModel.updateCurrentPosition(0)
+                        
+                        // 加载已背单词
+                        lifecycleScope.launch {
+                            val today = Calendar.getInstance().apply {
+                                set(Calendar.HOUR_OF_DAY, 0)
+                                set(Calendar.MINUTE, 0)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }.time
+                            
+                            val memorizedWords = viewModel.getMemorizedWordsByDate(today)
+                            wordAdapter.setMemorizedWords(memorizedWords)
+                        }
                     } else {
                         binding.textProgress.text = getString(R.string.study_progress_format, 0, 0)
                     }
