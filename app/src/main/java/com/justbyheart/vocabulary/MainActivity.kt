@@ -1,15 +1,19 @@
 package com.justbyheart.vocabulary
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.ActivityMainBinding
+import com.justbyheart.vocabulary.utils.WordDataLoader
+import kotlinx.coroutines.launch
 
 /**
  * 应用主活动类
@@ -75,6 +79,77 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             onBackPressedCallback.isEnabled = destination.id in rootDestinations
         }
+        
+        // 检查是否已初始化数据
+        val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
+        val isDataInitialized = sharedPreferences.getBoolean("data_initialized", false)
+        
+        if (!isDataInitialized) {
+            showInitialWordBankSelection()
+        }
+    }
+    
+    /**
+     * 显示初始词库选择对话框
+     */
+    private fun showInitialWordBankSelection() {
+        val wordBanks = WordDataLoader.getAvailableWordBanks().toTypedArray()
+        var selectedIndex = 0
+
+        AlertDialog.Builder(this)
+            .setTitle("选择词库")
+            .setSingleChoiceItems(wordBanks, selectedIndex) { _, which ->
+                selectedIndex = which
+            }
+            .setPositiveButton("确定") { _, _ ->
+                val selectedWordBank = wordBanks[selectedIndex]
+                initializeWordBankData(selectedWordBank)
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    /**
+     * 初始化词库数据
+     */
+    private fun initializeWordBankData(wordBank: String) {
+        lifecycleScope.launch {
+            try {
+                val repository = getRepository()
+                
+                // 获取词库对应的文件名
+                val fileNames = WordDataLoader.getWordBankFileNames(wordBank)
+
+                // 加载所有相关文件的单词
+                val allWords = mutableListOf<com.justbyheart.vocabulary.data.entity.Word>()
+                for (fileName in fileNames) {
+                    val words = WordDataLoader.loadWordsFromAssets(this@MainActivity, fileName)
+                    allWords.addAll(words)
+                }
+
+                // 保存到数据库
+                repository.insertWords(allWords)
+
+                // 保存当前词库设置
+                val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
+                sharedPreferences.edit()
+                    .putString("current_word_bank", wordBank)
+                    .putBoolean("data_initialized", true)
+                    .apply()
+
+                Toast.makeText(this@MainActivity, "词库初始化完成", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                // 出错时显示错误信息并重新选择
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("初始化失败")
+                    .setMessage("词库初始化失败: ${e.message}")
+                    .setPositiveButton("重试") { _, _ ->
+                        showInitialWordBankSelection()
+                    }
+                    .setCancelable(false)
+                    .show()
+            }
+        }
     }
     
     /**
@@ -84,44 +159,48 @@ class MainActivity : AppCompatActivity() {
      * 实现点击底部导航项时自动切换对应的Fragment。
      */
     private fun setupNavigation() {
-        // 获取NavHostFragment实例
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        
-        // 获取NavController
-        navController = navHostFragment.navController
-        
-        // 将底部导航栏与NavController关联
-        // 这样点击底部导航项时会自动导航到对应的Fragment
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigation.setupWithNavController(navController)
-        
-        // 解决部分情况下无法跳转到首页的问题
-        bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_home -> {
-                    // 使用navigate方法确保能正确跳转到首页
-                    navController.navigate(R.id.navigation_home)
-                    true
+        try {
+            // 获取NavHostFragment实例
+            val navHostFragment = supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            
+            // 获取NavController
+            navController = navHostFragment.navController
+            
+            // 将底部导航栏与NavController关联
+            // 这样点击底部导航项时会自动导航到对应的Fragment
+            val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNavigation.setupWithNavController(navController)
+            
+            // 解决部分情况下无法跳转到首页的问题
+            bottomNavigation.setOnItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.navigation_home -> {
+                        // 使用navigate方法确保能正确跳转到首页
+                        navController.navigate(R.id.navigation_home)
+                        true
+                    }
+                    R.id.navigation_study -> {
+                        navController.navigate(R.id.navigation_study)
+                        true
+                    }
+                    R.id.navigation_review -> {
+                        navController.navigate(R.id.navigation_review)
+                        true
+                    }
+                    R.id.navigation_favorites -> {
+                        navController.navigate(R.id.navigation_favorites)
+                        true
+                    }
+                    R.id.navigation_settings -> {
+                        navController.navigate(R.id.navigation_settings)
+                        true
+                    }
+                    else -> false
                 }
-                R.id.navigation_study -> {
-                    navController.navigate(R.id.navigation_study)
-                    true
-                }
-                R.id.navigation_review -> {
-                    navController.navigate(R.id.navigation_review)
-                    true
-                }
-                R.id.navigation_favorites -> {
-                    navController.navigate(R.id.navigation_favorites)
-                    true
-                }
-                R.id.navigation_settings -> {
-                    navController.navigate(R.id.navigation_settings)
-                    true
-                }
-                else -> false
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
     

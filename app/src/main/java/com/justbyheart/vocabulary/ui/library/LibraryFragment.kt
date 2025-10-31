@@ -51,7 +51,7 @@ class LibraryFragment : Fragment() {
             findNavController().popBackStack()
         }
 
-        viewModel.loadUncompletedWords()
+        viewModel.loadUncompletedWords(requireContext())
     }
 
     private fun setupRecyclerView() {
@@ -69,8 +69,8 @@ class LibraryFragment : Fragment() {
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when (tab?.position) {
-                    0 -> viewModel.loadUncompletedWords()
-                    1 -> viewModel.loadCompletedWords()
+                    0 -> viewModel.loadUncompletedWords(requireContext())
+                    1 -> viewModel.loadCompletedWords(requireContext())
                 }
             }
 
@@ -87,6 +87,12 @@ class LibraryFragment : Fragment() {
         viewModel.completedWords.observe(viewLifecycleOwner) {
             wordAdapter.submitList(it)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 每次返回此页面时重新加载数据
+        viewModel.loadUncompletedWords(requireContext())
     }
 
     override fun onDestroyView() {

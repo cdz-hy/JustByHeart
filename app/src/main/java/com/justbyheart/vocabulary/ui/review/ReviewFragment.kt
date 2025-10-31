@@ -56,7 +56,7 @@ class ReviewFragment : Fragment() {
         observeViewModel()
         // 默认显示本日已背诵的单词
         val today = viewModel.getTodayZeroed()
-        viewModel.loadWordsForDate(today)
+        viewModel.loadWordsForDate(today, requireContext())
         val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
         binding.textSelectedDate.text = dateFormat.format(today)
         binding.textSelectedDate.visibility = View.VISIBLE
@@ -89,7 +89,7 @@ class ReviewFragment : Fragment() {
                     set(Calendar.MILLISECOND, 0)
                 }.time
                 
-                viewModel.loadWordsForDate(selectedDate)
+                viewModel.loadWordsForDate(selectedDate, requireContext())
                 
                 val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
                 binding.textSelectedDate.text = dateFormat.format(selectedDate)

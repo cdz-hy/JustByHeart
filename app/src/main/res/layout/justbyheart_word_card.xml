@@ -190,7 +190,7 @@
                 android:id="@+id/front_of_card_group"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:constraint_referenced_ids="text_english,text_pronunciation,button_speak,text_chinese,divider1,label_definition,text_definition,label_example,text_example,text_example_translation,button_memorized" />
+                app:constraint_referenced_ids="text_english,text_pronunciation,button_speak,text_chinese,divider1,label_definition,text_definition,label_example,text_example,text_example_translation,layout_memorized" />
 
             <TextView
                 android:id="@+id/back_of_card"

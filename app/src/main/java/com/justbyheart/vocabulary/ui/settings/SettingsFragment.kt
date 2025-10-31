@@ -1,5 +1,6 @@
 package com.justbyheart.vocabulary.ui.settings
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -7,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +17,7 @@ import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentSettingsBinding
 import com.justbyheart.vocabulary.utils.WordDataLoader
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -35,7 +38,9 @@ class SettingsFragment : Fragment() {
         // SharedPreferences相关常量
         private const val PREFS_NAME = "vocabulary_settings"          // 配置文件名
         private const val KEY_DAILY_WORD_COUNT = "daily_word_count"   // 每日单词数键名
+        private const val KEY_CURRENT_WORD_BANK = "current_word_bank" // 当前词库键名
         private const val DEFAULT_DAILY_WORD_COUNT = 10               // 默认每日单词数
+        private const val DEFAULT_WORD_BANK = "六级核心"                // 默认词库
     }
     
     override fun onCreateView(
@@ -102,6 +107,11 @@ class SettingsFragment : Fragment() {
         binding.buttonInitializeData.setOnClickListener {
             initializeWordData()
         }
+        
+        // 设置词库选择按钮的点击事件
+        binding.buttonSelectWordBank.setOnClickListener {
+            showWordBankSelectionDialog()
+        }
     }
     
     /**
@@ -109,8 +119,11 @@ class SettingsFragment : Fragment() {
      */
     private fun loadSettings() {
         val dailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
+        val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK)
+        
         binding.seekBarDailyWords.progress = dailyWordCount - 1
         binding.textDailyWordCount.text = getString(R.string.daily_word_count_format, dailyWordCount)
+        binding.textCurrentWordBank.text = currentWordBank
     }
     
     /**
@@ -123,6 +136,182 @@ class SettingsFragment : Fragment() {
             .apply()
         
         viewModel.updateDailyWordCount(count)
+    }
+    
+    /**
+     * 保存当前词库到SharedPreferences
+     * @param wordBank 要保存的词库名称
+     */
+    private fun saveCurrentWordBank(wordBank: String) {
+        sharedPreferences.edit()
+            .putString(KEY_CURRENT_WORD_BANK, wordBank)
+            .apply()
+    }
+    
+    /**
+     * 显示词库选择对话框
+     */
+    private fun showWordBankSelectionDialog() {
+        val wordBanks = WordDataLoader.getAvailableWordBanks().toTypedArray()
+        val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+        val selectedIndex = wordBanks.indexOf(currentWordBank)
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("选择词库")
+            .setSingleChoiceItems(wordBanks, selectedIndex) { dialog, which ->
+                val selectedWordBank = wordBanks[which]
+                if (selectedWordBank != currentWordBank) {
+                    switchWordBank(selectedWordBank)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+    
+    /**
+     * 加载新的词库
+     * @param wordBank 词库名称
+     */
+    private suspend fun loadNewWordBank(wordBank: String) {
+        try {
+            // 获取当前词库
+            val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+            
+            // 获取词库对应的文件名
+            val fileNames = WordDataLoader.getWordBankFileNames(wordBank)
+            
+            // 加载所有相关文件的单词
+            val allWords = mutableListOf<com.justbyheart.vocabulary.data.entity.Word>()
+            for (fileName in fileNames) {
+                val words = WordDataLoader.loadWordsFromAssets(requireContext(), fileName)
+                allWords.addAll(words)
+                binding.textInitializeStatus.text = "正在加载词库: $fileName..."
+            }
+            
+            // 保存到数据库
+            viewModel.initializeWords(allWords)
+            
+            // 保存当前词库设置
+            saveCurrentWordBank(wordBank)
+            binding.textCurrentWordBank.text = wordBank
+            binding.textInitializeStatus.text = "已加载新词库: $wordBank (${allWords.size}个单词)"
+            
+            Toast.makeText(context, "已加载新词库: $wordBank (${allWords.size}个单词)", Toast.LENGTH_LONG).show()
+            
+            // 延迟一小段时间再发送广播，确保数据库操作完成
+            delay(200)
+            
+            // 询问是否迁移数据
+            showDataMigrationDialog(currentWordBank, wordBank)
+            
+            // 发送广播通知首页刷新
+            val intent = android.content.Intent("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
+            requireActivity().sendBroadcast(intent)
+        } catch (e: Exception) {
+            binding.textInitializeStatus.text = "加载词库失败: ${e.message}"
+            Toast.makeText(context, "加载词库失败: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * 切换词库
+     * @param newWordBank 新的词库名称
+     */
+    private fun switchWordBank(newWordBank: String) {
+        val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+        
+        if (newWordBank == currentWordBank) return
+        
+        binding.buttonSelectWordBank.isEnabled = false
+        binding.textInitializeStatus.text = "正在切换词库..."
+        binding.textInitializeStatus.visibility = View.VISIBLE
+        
+        lifecycleScope.launch {
+            try {
+                // 检查新词库是否已经存在于数据库中
+                val wordCountInNewBank = viewModel.getWordCountByWordBank(newWordBank)
+                
+                if (wordCountInNewBank == 0) {
+                    // 新词库不存在，需要加载
+                    loadNewWordBank(newWordBank)
+                } else {
+                    // 新词库已存在，直接切换
+                    saveCurrentWordBank(newWordBank)
+                    binding.textCurrentWordBank.text = newWordBank
+                    binding.textInitializeStatus.text = "已切换到词库: $newWordBank"
+                    
+                    // 延迟一小段时间再发送广播，确保操作完成
+                    delay(200)
+                    
+                    // 询问是否迁移数据
+                    showDataMigrationDialog(currentWordBank, newWordBank)
+                    
+                    // 发送广播通知首页刷新
+                    val intent = android.content.Intent("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
+                    requireActivity().sendBroadcast(intent)
+                }
+            } catch (e: Exception) {
+                binding.textInitializeStatus.text = "切换词库失败: ${e.message}"
+                Toast.makeText(context, "切换词库失败: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                binding.buttonSelectWordBank.isEnabled = true
+            }
+        }
+    }
+    
+    /**
+     * 显示数据迁移对话框
+     * @param fromWordBank 原词库
+     * @param toWordBank 目标词库
+     */
+    private fun showDataMigrationDialog(fromWordBank: String, toWordBank: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("数据迁移")
+            .setMessage("是否将当前词库($fromWordBank)的背诵和收藏记录迁移到新词库($toWordBank)？")
+            .setPositiveButton("迁移背诵记录") { _, _ ->
+                migrateStudyRecords(fromWordBank, toWordBank)
+            }
+            .setNegativeButton("迁移收藏记录") { _, _ ->
+                migrateFavoriteWords(fromWordBank, toWordBank)
+            }
+            .setNeutralButton("全部迁移") { _, _ ->
+                migrateStudyRecords(fromWordBank, toWordBank)
+                migrateFavoriteWords(fromWordBank, toWordBank)
+            }
+            .show()
+    }
+    
+    /**
+     * 迁移学习记录
+     * @param fromWordBank 原词库
+     * @param toWordBank 目标词库
+     */
+    private fun migrateStudyRecords(fromWordBank: String, toWordBank: String) {
+        lifecycleScope.launch {
+            try {
+                viewModel.migrateStudyRecords(fromWordBank, toWordBank)
+                Toast.makeText(context, "背诵记录迁移完成", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "背诵记录迁移失败: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    
+    /**
+     * 迁移收藏记录
+     * @param fromWordBank 原词库
+     * @param toWordBank 目标词库
+     */
+    private fun migrateFavoriteWords(fromWordBank: String, toWordBank: String) {
+        lifecycleScope.launch {
+            try {
+                viewModel.migrateFavoriteWords(fromWordBank, toWordBank)
+                Toast.makeText(context, "收藏记录迁移完成", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "收藏记录迁移失败: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
     
     /**
@@ -139,19 +328,51 @@ class SettingsFragment : Fragment() {
                 viewModel.clearAllWords()
                 binding.textInitializeStatus.text = "正在清空数据库..."
                 
-                // 从assets目录加载单词数据
-                val words = WordDataLoader.loadWordsFromAssets(requireContext())
-                viewModel.initializeWords(words)
-                binding.textInitializeStatus.text = getString(R.string.word_data_initialized, words.size)
+                // 获取当前选择的词库
+                val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+                
+                // 获取词库对应的文件名
+                val fileNames = WordDataLoader.getWordBankFileNames(currentWordBank)
+                
+                // 加载所有相关文件的单词
+                val allWords = mutableListOf<com.justbyheart.vocabulary.data.entity.Word>()
+                for (fileName in fileNames) {
+                    val words = WordDataLoader.loadWordsFromAssets(requireContext(), fileName)
+                    allWords.addAll(words)
+                    binding.textInitializeStatus.text = "正在加载词库: $fileName..."
+                }
+                
+                viewModel.initializeWords(allWords)
+                binding.textInitializeStatus.text = getString(R.string.word_data_initialized, allWords.size)
                 
                 // 标记数据已初始化
                 sharedPreferences.edit()
                     .putBoolean("data_initialized", true)
                     .apply()
+                    
+                // 更新显示的单词总数
+                updateWordCountDisplay()
             } catch (e: Exception) {
                 binding.textInitializeStatus.text = getString(R.string.initialization_failed, e.message)
             } finally {
                 binding.buttonInitializeData.isEnabled = true
+            }
+        }
+    }
+    
+    /**
+     * 更新单词总数显示
+     */
+    private fun updateWordCountDisplay() {
+        lifecycleScope.launch {
+            try {
+                // 获取当前词库
+                val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+                val wordCount = viewModel.getWordCountByWordBank(currentWordBank)
+                binding.textInitializeStatus.text = getString(R.string.word_data_initialized, wordCount)
+                binding.textInitializeStatus.visibility = View.VISIBLE
+            } catch (e: Exception) {
+                // 如果获取单词数量失败，保持原状态
             }
         }
     }
@@ -167,15 +388,7 @@ class SettingsFragment : Fragment() {
             binding.buttonInitializeData.text = getString(R.string.data_already_initialized)
             
             // 显示初始化状态
-            lifecycleScope.launch {
-                try {
-                    val wordCount = viewModel.getWordCount()
-                    binding.textInitializeStatus.text = getString(R.string.word_data_initialized, wordCount)
-                    binding.textInitializeStatus.visibility = View.VISIBLE
-                } catch (e: Exception) {
-                    // 如果获取单词数量失败，保持原状态
-                }
-            }
+            updateWordCountDisplay()
         }
     }
     

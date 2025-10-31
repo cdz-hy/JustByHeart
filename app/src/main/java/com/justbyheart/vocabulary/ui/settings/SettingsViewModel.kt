@@ -44,10 +44,26 @@ class SettingsViewModel(private val repository: WordRepository) : ViewModel() {
     }
     
     suspend fun getWordCount(): Int {
-        return repository.getTotalWordsCount()
+        return repository.getWordCount()
+    }
+    
+    suspend fun getWordCountByWordBank(wordBank: String): Int {
+        return repository.getWordCountByWordBank(wordBank)
     }
     
     suspend fun clearAllWords() {
         repository.deleteAllWords()
+    }
+    
+    fun migrateStudyRecords(fromWordBank: String, toWordBank: String) {
+        viewModelScope.launch {
+            repository.migrateStudyRecords(fromWordBank, toWordBank)
+        }
+    }
+    
+    fun migrateFavoriteWords(fromWordBank: String, toWordBank: String) {
+        viewModelScope.launch {
+            repository.migrateFavoriteWords(fromWordBank, toWordBank)
+        }
     }
 }

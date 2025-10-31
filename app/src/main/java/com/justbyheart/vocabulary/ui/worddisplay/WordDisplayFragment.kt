@@ -16,6 +16,10 @@ import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentWordDisplayBinding
+import com.justbyheart.vocabulary.utils.JsonPhraseItem
+import com.justbyheart.vocabulary.utils.JsonRelItem
+import com.justbyheart.vocabulary.utils.JsonRelWordItem
+import com.justbyheart.vocabulary.utils.JsonSynoItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -122,34 +126,49 @@ class WordDisplayFragment : Fragment() {
     }
 
     private fun parseSynos(gson: Gson, json: String?): String {
-        if (json == null) return ""
-        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonSynoDetail::class.java).type
-        val synos: List<com.justbyheart.vocabulary.utils.JsonSynoDetail> = gson.fromJson(json, type)
-        return synos.joinToString("\n") { syno ->
-            val hwds = syno.hwds?.joinToString(", ") { it.w ?: "" } ?: ""
-            "${syno.pos ?: ""}. ${syno.tran ?: ""} - [${hwds}]"
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonSynoItem::class.java).type
+            val synos: List<com.justbyheart.vocabulary.utils.JsonSynoItem> = gson.fromJson(json, type)
+            synos.joinToString("\n") { syno: com.justbyheart.vocabulary.utils.JsonSynoItem ->
+                val hwds = syno.hwds?.joinToString(", ") { it: com.justbyheart.vocabulary.utils.JsonHwd -> it.w ?: "" } ?: ""
+                "${syno.pos ?: ""}. ${syno.tran ?: ""} - [${hwds}]"
+            }
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
         }
     }
 
     private fun parsePhrases(gson: Gson, json: String?): String {
-        if (json == null) return ""
-        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonPhraseDetail::class.java).type
-        val phrases: List<com.justbyheart.vocabulary.utils.JsonPhraseDetail> = gson.fromJson(json, type)
-        return phrases.joinToString("\n") { "${it.pContent ?: ""} - ${it.pCn ?: ""}" }
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonPhraseItem::class.java).type
+            val phrases: List<com.justbyheart.vocabulary.utils.JsonPhraseItem> = gson.fromJson(json, type)
+            phrases.joinToString("\n") { it: com.justbyheart.vocabulary.utils.JsonPhraseItem -> "${it.pContent ?: ""} - ${it.pCn ?: ""}" }
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
+        }
     }
 
     private fun parseRelWord(gson: Gson, json: String?): String {
-        if (json == null) return ""
-        val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonRelDetail::class.java).type
-        val rels: List<com.justbyheart.vocabulary.utils.JsonRelDetail> = gson.fromJson(json, type)
-        val builder = StringBuilder()
-        rels.forEach { rel ->
-            builder.append("${rel.pos ?: ""}.\n")
-            rel.words?.forEach { word ->
-                builder.append("  - ${word.hwd ?: ""}: (${word.tran ?: ""})\n")
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonRelItem::class.java).type
+            val rels: List<com.justbyheart.vocabulary.utils.JsonRelItem> = gson.fromJson(json, type)
+            val builder = StringBuilder()
+            rels.forEach { rel: com.justbyheart.vocabulary.utils.JsonRelItem ->
+                builder.append("${rel.pos ?: ""}.\n")
+                rel.words?.forEach { word: com.justbyheart.vocabulary.utils.JsonRelWordItem ->
+                    builder.append("  - ${word.hwd ?: ""}: (${word.tran ?: ""})\n")
+                }
             }
+            builder.toString().trimEnd()
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
         }
-        return builder.toString().trimEnd()
     }
 
     override fun onDestroyView() {
@@ -221,12 +240,12 @@ class WordDisplayFragment : Fragment() {
                         if (!phonetic.audio.isNullOrEmpty()) {
                             // 检查audio字段是否是完整URL
                             val audioUrl = phonetic.audio
-                            val finalUrl = if (audioUrl!!.startsWith("//")) {
+                            val finalUrl = if (audioUrl != null && audioUrl.startsWith("//")) {
                                 "https:$audioUrl"
-                            } else if (audioUrl.startsWith("/")) {
+                            } else if (audioUrl != null && audioUrl.startsWith("/")) {
                                 "https://api.dictionaryapi.dev$audioUrl"
                             } else {
-                                audioUrl
+                                audioUrl ?: ""
                             }
                             return finalUrl
                         }

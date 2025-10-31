@@ -32,8 +32,8 @@ class VocabularyApplication : Application() {
         
         sharedPreferences = getSharedPreferences("vocabulary_settings", Context.MODE_PRIVATE)
         
-        // 初始化单词数据（仅在首次启动时）
-        initializeWordsIfNeeded()
+        // 不再在应用启动时初始化单词数据
+        // initializeWordsIfNeeded()
     }
     
     private fun initializeWordsIfNeeded() {
@@ -45,7 +45,7 @@ class VocabularyApplication : Application() {
             applicationScope.launch(Dispatchers.IO) {
                 try {
                     // 从assets目录加载单词数据
-                    val words = WordDataLoader.loadWordsFromAssets(this@VocabularyApplication)
+                    val words = WordDataLoader.loadWordsFromAssets(this@VocabularyApplication, "vocabulary_words")
                     
                     // 插入到数据库
                     repository.insertWords(words)

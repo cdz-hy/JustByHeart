@@ -1,5 +1,6 @@
 package com.justbyheart.vocabulary.ui.library
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,16 +18,31 @@ class LibraryViewModel(private val repository: WordRepository) : ViewModel() {
 
     private val _completedWords = MutableLiveData<List<Word>>()
     val completedWords: LiveData<List<Word>> = _completedWords
+    
+    // SharedPreferences常量
+    private companion object {
+        const val PREFS_NAME = "vocabulary_settings"
+        const val KEY_CURRENT_WORD_BANK = "current_word_bank"
+        const val DEFAULT_WORD_BANK = "六级核心"
+    }
 
-    fun loadUncompletedWords() {
+    fun loadUncompletedWords(context: Context) {
         viewModelScope.launch {
-            _uncompletedWords.value = repository.getUncompletedWords(Int.MAX_VALUE) // Get all uncompleted words
+            // 获取当前词库
+            val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+            
+            _uncompletedWords.value = repository.getUncompletedWordsByWordBank(currentWordBank, Int.MAX_VALUE)
         }
     }
 
-    fun loadCompletedWords() {
+    fun loadCompletedWords(context: Context) {
         viewModelScope.launch {
-            _completedWords.value = repository.getCompletedWords()
+            // 获取当前词库
+            val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+            
+            _completedWords.value = repository.getCompletedWordsByWordBank(currentWordBank)
         }
     }
 }

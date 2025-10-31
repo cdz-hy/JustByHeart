@@ -11,6 +11,9 @@ import androidx.navigation.fragment.findNavController
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentFavoritesBinding
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
 
 class FavoritesFragment : Fragment() {
     
@@ -48,6 +51,8 @@ class FavoritesFragment : Fragment() {
         
         setupRecyclerView()
         observeViewModel()
+        // 加载当前词库的收藏单词
+        viewModel.loadFavoriteWords(requireContext())
     }
     
     private fun setupRecyclerView() {
@@ -65,11 +70,13 @@ class FavoritesFragment : Fragment() {
     }
     
     private fun observeViewModel() {
-        viewModel.favoriteWords.observe(viewLifecycleOwner) { words ->
-            favoriteAdapter.submitList(words)
-            
-            binding.textNoFavorites.visibility = if (words.isEmpty()) View.VISIBLE else View.GONE
-            binding.recyclerViewFavorites.visibility = if (words.isEmpty()) View.GONE else View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.favoriteWords.collectLatest { words ->
+                favoriteAdapter.submitList(words)
+                
+                binding.textNoFavorites.visibility = if (words.isEmpty()) View.VISIBLE else View.GONE
+                binding.recyclerViewFavorites.visibility = if (words.isEmpty()) View.GONE else View.VISIBLE
+            }
         }
     }
     

@@ -113,7 +113,7 @@ class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
      * 当用户提交搜索查询时调用
      */
     override fun onQueryTextSubmit(query: String?): Boolean {
-        viewModel.searchWords(query ?: "")
+        viewModel.searchWords(query ?: "", requireContext())
         return true
     }
 
@@ -121,7 +121,7 @@ class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
      * 当搜索框中的文本发生变化时调用
      */
     override fun onQueryTextChange(newText: String?): Boolean {
-        viewModel.searchWords(newText ?: "")
+        viewModel.searchWords(newText ?: "", requireContext())
         return true
     }
 

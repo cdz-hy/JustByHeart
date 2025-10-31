@@ -1,186 +1,297 @@
 package com.justbyheart.vocabulary.data.repository
 
 import androidx.lifecycle.LiveData
-import com.justbyheart.vocabulary.data.dao.*
+import com.justbyheart.vocabulary.data.dao.DailyGoalDao
+import com.justbyheart.vocabulary.data.dao.FavoriteWordDao
+import com.justbyheart.vocabulary.data.dao.StudyRecordDao
+import com.justbyheart.vocabulary.data.dao.WordDao
 import com.justbyheart.vocabulary.data.entity.*
-import java.util.Date
+import kotlinx.coroutines.flow.Flow
+import java.util.*
 
-/**
- * 单词数据仓库类
- * 
- * 作为数据层的统一访问接口，封装了所有数据库操作。
- * 遵循Repository模式，为上层提供清晰的数据访问API，
- * 隐藏了具体的数据源实现细节。
- * 
- * @param wordDao 单词数据访问对象
- * @param studyRecordDao 学习记录数据访问对象
- * @param favoriteWordDao 收藏单词数据访问对象
- * @param dailyGoalDao 每日目标数据访问对象
- */
 class WordRepository(
     private val wordDao: WordDao,
     private val studyRecordDao: StudyRecordDao,
     private val favoriteWordDao: FavoriteWordDao,
     private val dailyGoalDao: DailyGoalDao
 ) {
-    
-    // ==================== 单词相关操作 ====================
-    
-    /**
-     * 获取所有单词
-     * @return LiveData包装的单词列表
-     */
+    // 单词相关操作
     fun getAllWords(): LiveData<List<Word>> = wordDao.getAllWords()
     
-    /**
-     * 获取所有单词 (List)
-     * @return 单词列表
-     */
-    suspend fun getAllWordsList(): List<Word> = wordDao.getAllWordsList()
-    
-    /**
-     * 根据ID获取单词
-     * @param id 单词ID
-     * @return 单词对象或null
-     */
     suspend fun getWordById(id: Long): Word? = wordDao.getWordById(id)
     
-    /**
-     * 随机获取指定数量的单词
-     * @param count 单词数量
-     * @return 单词列表
-     */
     suspend fun getRandomWords(count: Int): List<Word> = wordDao.getRandomWords(count)
     
-    suspend fun getUncompletedWords(count: Int): List<Word> = wordDao.getUncompletedWords(count)
-
-    /**
-     * 批量插入单词
-     * @param words 单词列表
-     */
+    suspend fun getRandomWordsByCategory(category: String, count: Int): List<Word> = 
+        wordDao.getRandomWordsByCategory(category, count)
+    
+    suspend fun getWordsByWordBank(wordBank: String): List<Word> = wordDao.getWordsByWordBank(wordBank)
+    
+    suspend fun getRandomWordsByWordBank(wordBank: String, count: Int): List<Word> = 
+        wordDao.getRandomWordsByWordBank(wordBank, count)
+    
+    suspend fun getWordByEnglishAndWordBank(english: String, wordBank: String): Word? = 
+        wordDao.getWordByEnglishAndWordBank(english, wordBank)
+    
+    suspend fun getWordCountByWordBank(wordBank: String): Int = wordDao.getWordCountByWordBank(wordBank)
+    
+    suspend fun insertWord(word: Word): Long = wordDao.insertWord(word)
+    
     suspend fun insertWords(words: List<Word>) = wordDao.insertWords(words)
     
-    /**
-     * 删除所有单词
-     */
-    suspend fun deleteAllWords() = wordDao.deleteAllWords()
+    suspend fun updateWord(word: Word) = wordDao.updateWord(word)
     
-    // ==================== 学习记录相关操作 ====================
+    suspend fun deleteWord(word: Word) = wordDao.deleteWord(word)
     
-    /**
-     * 根据日期获取学习记录
-     * @param date 学习日期
-     * @return LiveData包装的学习记录列表
-     */
-    fun getStudyRecordsByDate(date: Date): LiveData<List<StudyRecord>> = 
-        studyRecordDao.getStudyRecordsByDate(date)
+    suspend fun deleteWordsByWordBank(wordBank: String): Int = wordDao.deleteWordsByWordBank(wordBank)
     
-    /**
-     * 插入学习记录
-     * @param studyRecord 学习记录对象
-     */
-    suspend fun insertStudyRecord(studyRecord: StudyRecord) = 
-        studyRecordDao.insertStudyRecord(studyRecord)
+    suspend fun getUncompletedWords(count: Int): List<Word> = wordDao.getUncompletedWords(count)
     
-    /**
-     * 更新学习记录
-     * @param studyRecord 学习记录对象
-     */
-    suspend fun updateStudyRecord(studyRecord: StudyRecord) = 
-        studyRecordDao.updateStudyRecord(studyRecord)
+    suspend fun getUncompletedWordsByWordBank(wordBank: String, count: Int): List<Word> {
+        return wordDao.getUncompletedWordsByWordBank(wordBank, count)
+    }
     
-    /**
-     * 根据单词ID和日期获取学习记录
-     * @param wordId 单词ID
-     * @param studyDate 学习日期
-     * @return 学习记录对象或null
-     */
-    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> = studyRecordDao.getCompletedWordIdsForDate(date)
-
+    suspend fun getAdditionalUncompletedWordsByWordBank(wordBank: String, count: Int, excludeIds: List<Long>): List<Word> {
+        return wordDao.getAdditionalUncompletedWordsByWordBank(wordBank, count, excludeIds)
+    }
+    
+    // 添加一个新的方法，按词库获取未完成的单词并按ID排序（保证获取最早添加的单词）
+    suspend fun getUncompletedWordsByWordBankOrdered(wordBank: String, count: Int): List<Word> {
+        // 直接在数据库查询中按词库过滤，提高效率
+        val allUncompletedWords = wordDao.getUncompletedWordsByWordBank(wordBank, count * 2) // 获取更多单词以防过滤后不足
+        return allUncompletedWords
+            .sortedBy { it.id } // 按ID排序，确保获取最早添加的单词
+            .take(count)
+    }
+    
     suspend fun getWordsByIds(ids: List<Long>): List<Word> = wordDao.getWordsByIds(ids)
-
+    
+    suspend fun getAdditionalUncompletedWords(count: Int, excludeIds: List<Long>): List<Word> = 
+        wordDao.getAdditionalUncompletedWords(count, excludeIds)
+    
+    suspend fun getCompletedWords(): List<Word> = wordDao.getCompletedWords()
+    
+    suspend fun getWordCount(): Int = wordDao.getWordCount()
+    
+    suspend fun deleteAllWords(): Int = wordDao.deleteAllWords()
+    
+    /**
+     * 在指定词库中搜索单词
+     * @param query 搜索关键词
+     * @param wordBank 词库名称
+     * @return 匹配的单词列表
+     */
+    suspend fun searchWordsInWordBank(query: String, wordBank: String): List<Word> {
+        return wordDao.searchWordsInWordBank(query, wordBank)
+    }
+    
+    // 学习记录相关操作
+    suspend fun insertStudyRecord(studyRecord: StudyRecord) = studyRecordDao.insertStudyRecord(studyRecord)
+    
+    suspend fun updateStudyRecord(studyRecord: StudyRecord) = studyRecordDao.updateStudyRecord(studyRecord)
+    
     suspend fun getStudyRecordByWordIdAndDate(wordId: Long, date: Date): StudyRecord? = 
         studyRecordDao.getStudyRecordByWordIdAndDate(wordId, date)
     
-    /**
-     * 获取所有学习日期
-     * @return LiveData包装的日期列表
-     */
-    fun getAllStudyDates(): LiveData<List<Date>> = studyRecordDao.getAllStudyDates()
+    fun getStudyRecordsByDate(date: Date): LiveData<List<StudyRecord>> = 
+        studyRecordDao.getStudyRecordsByDate(date)
     
-    // ==================== 收藏相关操作 ====================
+    suspend fun getStudyRecordsByWordId(wordId: Long): List<StudyRecord> = studyRecordDao.getStudyRecordsByWordId(wordId)
     
-    /**
-     * 获取所有收藏的单词
-     * @return LiveData包装的收藏单词列表
-     */
-    fun getFavoriteWords(): LiveData<List<Word>> = favoriteWordDao.getFavoriteWords()
+    suspend fun getStudyRecordsBetweenDates(startDate: Date, endDate: Date): List<StudyRecord> = 
+        studyRecordDao.getStudyRecordsBetweenDates(startDate, endDate)
     
-    /**
-     * 添加单词到收藏夹
-     * @param wordId 单词ID
-     */
-    suspend fun addToFavorites(wordId: Long) {
-        favoriteWordDao.insertFavorite(FavoriteWord(wordId = wordId))
+    suspend fun deleteStudyRecord(studyRecord: StudyRecord) = studyRecordDao.deleteStudyRecord(studyRecord)
+    
+    suspend fun getCompletedWordsCountByDate(date: Date): Int = studyRecordDao.getCompletedWordsCountByDate(date)
+    
+    suspend fun getMemorizedWordsCount(): Int = studyRecordDao.getMemorizedWordsCount()
+    
+    suspend fun getMemorizedWordsCountByWordBank(wordBank: String): Int {
+        val wordsInBank = getWordsByWordBank(wordBank)
+        val wordIds = wordsInBank.map { it.id }
+        if (wordIds.isEmpty()) return 0
+        
+        return studyRecordDao.getMemorizedWordsCountByIds(wordIds)
     }
     
-    /**
-     * 从收藏夹移除单词
-     * @param wordId 单词ID
-     */
-    suspend fun removeFromFavorites(wordId: Long) {
-        favoriteWordDao.deleteFavoriteByWordId(wordId)
-    }
+    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> = studyRecordDao.getCompletedWordIdsForDate(date)
     
-    /**
-     * 检查单词是否已收藏
-     * @param wordId 单词ID
-     * @return true表示已收藏，false表示未收藏
-     */
-    suspend fun isFavorite(wordId: Long): Boolean = 
-        favoriteWordDao.isFavorite(wordId) > 0
-    
-    // ==================== 每日目标相关操作 ====================
-    
-    /**
-     * 根据日期获取每日目标
-     * @param date 目标日期
-     * @return 每日目标对象或null
-     */
-    suspend fun getDailyGoalByDate(date: Date): DailyGoal? = 
-        dailyGoalDao.getDailyGoalByDate(date)
-    
-    /**
-     * 插入每日目标
-     * @param dailyGoal 每日目标对象
-     */
-    suspend fun insertDailyGoal(dailyGoal: DailyGoal) = 
-        dailyGoalDao.insertDailyGoal(dailyGoal)
-    
-    /**
-     * 更新每日目标
-     * @param dailyGoal 每日目标对象
-     */
-    suspend fun updateDailyGoal(dailyGoal: DailyGoal) = 
-        dailyGoalDao.updateDailyGoal(dailyGoal)
-    
-    /**
-     * 获取最近的每日目标记录
-     * @return LiveData包装的每日目标列表
-     */
-    fun getRecentDailyGoals(): LiveData<List<DailyGoal>> = 
-        dailyGoalDao.getRecentDailyGoals()
-
-    suspend fun getCompletedWordsForDate(date: Date): List<Word> = studyRecordDao.getCompletedWordsForDate(date)
-
-    suspend fun getCompletedWords(): List<Word> = wordDao.getCompletedWords()
-
     suspend fun getCompletedWordsCountForSpecificWords(wordIds: List<Long>, date: Date): Int = 
         studyRecordDao.getCompletedWordsCountForSpecificWords(wordIds, date)
-
-    suspend fun getAdditionalUncompletedWords(count: Int, excludeIds: List<Long>): List<Word> = wordDao.getAdditionalUncompletedWords(count, excludeIds)
-
-    suspend fun getMemorizedWordsCount(): Int = studyRecordDao.getMemorizedWordsCount()
-
-    suspend fun getTotalWordsCount(): Int = wordDao.getWordCount()
+    
+    suspend fun getCompletedWordsForDate(date: Date): List<Word> = studyRecordDao.getCompletedWordsForDate(date)
+    
+    /**
+     * 获取指定词库中已完成的单词
+     * @param wordBank 词库名称
+     * @return 指定词库中已完成的单词列表
+     */
+    suspend fun getCompletedWordsByWordBank(wordBank: String): List<Word> {
+        val words = getWordsByWordBank(wordBank)
+        val wordIds = words.map { it.id }
+        if (wordIds.isEmpty()) return emptyList()
+        
+        return studyRecordDao.getCompletedWordsByIds(wordIds)
+    }
+    
+    /**
+     * 迁移学习记录到新的词库
+     * @param fromWordBank 原词库名称
+     * @param toWordBank 目标词库名称
+     */
+    suspend fun migrateStudyRecords(fromWordBank: String, toWordBank: String) {
+        // 获取原词库中已完成的单词英文名称
+        val completedWordsInFromBank = getCompletedWordsByWordBank(fromWordBank)
+        val completedEnglishWords = completedWordsInFromBank.map { it.english }
+        
+        if (completedEnglishWords.isEmpty()) return
+        
+        // 在目标词库中查找对应的单词
+        for (englishWord in completedEnglishWords) {
+            val targetWord = getWordByEnglishAndWordBank(englishWord, toWordBank)
+            targetWord?.let { word ->
+                // 检查是否已经有对应的学习记录
+                val today = getTodayZeroed()
+                val existingRecord = getStudyRecordByWordIdAndDate(word.id, today)
+                
+                // 如果没有记录，则创建新的学习记录
+                if (existingRecord == null) {
+                    val newRecord = StudyRecord(
+                        wordId = word.id,
+                        studyDate = today,
+                        isCompleted = true
+                    )
+                    insertStudyRecord(newRecord)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 迁移收藏记录到新的词库
+     * @param fromWordBank 原词库名称
+     * @param toWordBank 目标词库名称
+     */
+    suspend fun migrateFavoriteWords(fromWordBank: String, toWordBank: String) {
+        // 获取原词库中收藏的单词英文名称
+        val favoriteWordsInFromBank = getFavoriteWordsByWordBank(fromWordBank)
+        val favoriteEnglishWords = favoriteWordsInFromBank.map { it.english }
+        
+        if (favoriteEnglishWords.isEmpty()) return
+        
+        // 在目标词库中查找对应的单词
+        for (englishWord in favoriteEnglishWords) {
+            val targetWord = getWordByEnglishAndWordBank(englishWord, toWordBank)
+            targetWord?.let { word ->
+                // 检查是否已经有对应的收藏记录
+                val existingFavorite = getFavoriteWordByWordId(word.id)
+                
+                // 如果没有记录，则创建新的收藏记录
+                if (existingFavorite == null) {
+                    val newFavorite = FavoriteWord(
+                        wordId = word.id,
+                        addedDate = Date()
+                    )
+                    insertFavoriteWord(newFavorite)
+                }
+            }
+        }
+    }
+    
+    // 收藏单词相关操作
+    suspend fun insertFavoriteWord(favoriteWord: FavoriteWord): Long = favoriteWordDao.insertFavorite(favoriteWord)
+    
+    suspend fun deleteFavoriteWordByWordId(wordId: Long) = favoriteWordDao.deleteFavoriteByWordId(wordId)
+    
+    suspend fun getFavoriteWordByWordId(wordId: Long): FavoriteWord? = favoriteWordDao.getFavoriteByWordId(wordId)
+    
+    fun getFavoriteWords(): LiveData<List<Word>> = favoriteWordDao.getFavoriteWords()
+    
+    suspend fun isWordFavorite(wordId: Long): Boolean = favoriteWordDao.isFavorite(wordId) > 0
+    
+    /**
+     * 获取指定词库中的收藏单词
+     * @param wordBank 词库名称
+     * @return 指定词库中的收藏单词列表
+     */
+    suspend fun getFavoriteWordsByWordBank(wordBank: String): List<Word> {
+        val allFavoriteWords = getFavoriteWordsList()
+        return allFavoriteWords.filter { it.wordBank == wordBank }
+    }
+    
+    /**
+     * 获取所有收藏单词（非LiveData版本）
+     * @return 所有收藏单词列表
+     */
+    suspend fun getFavoriteWordsList(): List<Word> {
+        // 这里需要实现获取所有收藏单词的逻辑
+        // 由于FavoriteWordDao.getFavoriteWords()返回的是LiveData，我们需要另外的方法
+        return favoriteWordDao.getAllFavoriteWordsWithDetails()
+    }
+    
+    // 每日目标相关操作
+    suspend fun insertDailyGoal(dailyGoal: DailyGoal) = dailyGoalDao.insertDailyGoal(dailyGoal)
+    
+    suspend fun updateDailyGoal(dailyGoal: DailyGoal) = dailyGoalDao.updateDailyGoal(dailyGoal)
+    
+    suspend fun deleteDailyGoal(dailyGoal: DailyGoal) = dailyGoalDao.deleteDailyGoal(dailyGoal)
+    
+    suspend fun getDailyGoalByDate(date: Date): DailyGoal? = dailyGoalDao.getDailyGoalByDate(date)
+    
+    fun getRecentDailyGoals(): LiveData<List<DailyGoal>> = dailyGoalDao.getRecentDailyGoals()
+    
+    suspend fun createOrUpdateDailyGoal(targetCount: Int) {
+        val today = getTodayZeroed()
+        val existingGoal = getDailyGoalByDate(today)
+        
+        if (existingGoal != null) {
+            // 更新现有目标
+            val updatedGoal = existingGoal.copy(targetWordCount = targetCount)
+            updateDailyGoal(updatedGoal)
+        } else {
+            // 创建新目标
+            val newGoal = DailyGoal(
+                date = today,
+                targetWordCount = targetCount,
+                completedWordCount = 0
+            )
+            insertDailyGoal(newGoal)
+        }
+    }
+    
+    suspend fun updateDailyGoalCompletedCount(date: Date, completedCount: Int) {
+        val existingGoal = getDailyGoalByDate(date)
+        if (existingGoal != null) {
+            val updatedGoal = existingGoal.copy(completedWordCount = completedCount)
+            updateDailyGoal(updatedGoal)
+        }
+    }
+    
+    suspend fun getOrCreateTodayGoal(targetCount: Int): DailyGoal {
+        val today = getTodayZeroed()
+        val existingGoal = getDailyGoalByDate(today)
+        
+        return if (existingGoal != null) {
+            existingGoal
+        } else {
+            val newGoal = DailyGoal(
+                date = today,
+                targetWordCount = targetCount,
+                completedWordCount = 0
+            )
+            insertDailyGoal(newGoal)
+            newGoal
+        }
+    }
+    
+    // 辅助方法
+    private fun getTodayZeroed(): Date {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.time
+    }
 }

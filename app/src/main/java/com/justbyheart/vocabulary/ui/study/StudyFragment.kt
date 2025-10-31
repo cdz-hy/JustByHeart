@@ -52,31 +52,27 @@ class StudyFragment : Fragment() {
         setupViewPager()
         setupUI()
         observeViewModel()
-        viewModel.loadTodayWords()
+        viewModel.loadTodayWords(requireContext())
     }
     
     override fun onResume() {
         super.onResume()
-        viewModel.loadTodayWords()
+        viewModel.loadTodayWords(requireContext())
     }
     
     private fun setupViewPager() {
-                // 初始化适配器，并传入两个回调函数：
-                // 1. 点击收藏按钮时的回调
-                // 2. 翻转单词卡片时的回调
-                wordAdapter = WordPagerAdapter({
-                    word, isFavorite ->
-                    viewModel.toggleFavorite(word.id, isFavorite)
-                }, {
-                    wordId, isFlippedToBack ->
-                    if (isFlippedToBack) {
-                        // 从正面翻转到背面
-                        viewModel.addFlippedWord(wordId)
-                    } else {
-                        // 从背面翻转到正面
-                        viewModel.removeFlippedWord(wordId)
-                    }
-                })
+        // 直接传递null作为repository，因为WordPagerAdapter现在不依赖于repository
+        wordAdapter = WordPagerAdapter(
+            { word, isFavorite -> viewModel.toggleFavorite(word.id, isFavorite) },
+            { wordId, isFlipped -> 
+                if (isFlipped) {
+                    viewModel.addFlippedWord(wordId)
+                } else {
+                    viewModel.removeFlippedWord(wordId)
+                }
+            },
+            null
+        )
         
         binding.viewPagerWords.adapter = wordAdapter
         binding.viewPagerWords.orientation = ViewPager2.ORIENTATION_HORIZONTAL
@@ -84,7 +80,10 @@ class StudyFragment : Fragment() {
         binding.viewPagerWords.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
-                viewModel.updateCurrentPosition(position)
+                // 检查binding是否有效再进行操作
+                if (_binding != null) {
+                    viewModel.updateCurrentPosition(position)
+                }
             }
         })
     }
@@ -99,7 +98,8 @@ class StudyFragment : Fragment() {
             } else {
                 lifecycleScope.launch {
                     // 获取今日已完成的单词ID列表
-                    val completedWordIds = viewModel.getCompletedWordIdsForToday()
+                    val today = viewModel.getTodayZeroed()
+                    val completedWordIds = viewModel.getCompletedWordIdsForDate(today)
                     
                     // 过滤掉已完成的单词
                     val filteredFlippedWords = viewModel.flippedWords.value!!.filter { wordId ->
@@ -115,79 +115,125 @@ class StudyFragment : Fragment() {
                         val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
                             filteredFlippedWords.toLongArray()
                         )
-                        findNavController().navigate(action)
+                        // 检查NavController是否可用
+                        if (isAdded) {
+                            findNavController().navigate(action)
+                        }
                     }
                 }
             }
         }
         
         binding.buttonPrevious.setOnClickListener {
-            val currentItem = binding.viewPagerWords.currentItem
-            if (currentItem > 0) {
-                binding.viewPagerWords.currentItem = currentItem - 1
+            // 检查binding是否有效再进行操作
+            if (_binding != null) {
+                val currentItem = binding.viewPagerWords.currentItem
+                if (currentItem > 0) {
+                    binding.viewPagerWords.currentItem = currentItem - 1
+                }
             }
         }
         
         binding.buttonNext.setOnClickListener {
-            val currentItem = binding.viewPagerWords.currentItem
-            if (currentItem < wordAdapter.itemCount - 1) {
-                binding.viewPagerWords.currentItem = currentItem + 1
+            // 检查binding是否有效再进行操作
+            if (_binding != null) {
+                val currentItem = binding.viewPagerWords.currentItem
+                if (currentItem < wordAdapter.itemCount - 1) {
+                    binding.viewPagerWords.currentItem = currentItem + 1
+                }
             }
         }
     }
     
     private fun observeViewModel() {
         viewModel.todayWords.observe(viewLifecycleOwner) { words ->
-            wordAdapter.submitList(words) {
-                // 当列表更新完成后，如果列表不为空，则立即更新进度
-                if (words.isNotEmpty()) {
-                    binding.textProgress.text = getString(R.string.study_progress_format, 1, words.size)
-                    viewModel.updateCurrentPosition(0)
-                } else {
-                    binding.textProgress.text = getString(R.string.study_progress_format, 0, 0)
+            // 确保Fragment仍然活跃且binding有效
+            if (!isAdded || isDetached || _binding == null) return@observe
+            
+            try {
+                wordAdapter.submitList(words) { 
+                    // 在列表提交完成后更新UI
+                    if (!isAdded || isDetached || _binding == null) return@submitList
+                    
+                    // 当列表更新完成后，如果列表不为空，则立即更新进度
+                    if (words.isNotEmpty()) {
+                        binding.textProgress.text = getString(R.string.study_progress_format, 1, words.size)
+                        viewModel.updateCurrentPosition(0)
+                    } else {
+                        binding.textProgress.text = getString(R.string.study_progress_format, 0, 0)
+                    }
+                    
+                    // 控制 ViewPager 和提示文本的显示
+                    if (words.isEmpty()) {
+                        binding.viewPagerWords.visibility = View.GONE
+                        binding.textNoWords.visibility = View.VISIBLE
+                    } else {
+                        binding.viewPagerWords.visibility = View.VISIBLE
+                        binding.textNoWords.visibility = View.GONE
+                    }
+                    
+                    binding.buttonStartTest.visibility = if (words.isNotEmpty()) View.VISIBLE else View.GONE
                 }
+            } catch (e: Exception) {
+                // 确保不会因为binding访问异常导致崩溃
             }
-            
-            // 控制 ViewPager 和提示文本的显示
-            if (words.isEmpty()) {
-                binding.viewPagerWords.visibility = View.GONE
-                binding.textNoWords.visibility = View.VISIBLE
-            } else {
-                binding.viewPagerWords.visibility = View.VISIBLE
-                binding.textNoWords.visibility = View.GONE
-            }
-            
-            binding.buttonStartTest.visibility = if (words.isNotEmpty()) View.VISIBLE else View.GONE
         }
         
         viewModel.currentPosition.observe(viewLifecycleOwner) { position ->
-            val totalWords = wordAdapter.itemCount
-            if (totalWords > 0) {
-                binding.textProgress.text = getString(R.string.study_progress_format, position + 1, totalWords)
+            // 确保Fragment仍然活跃且binding有效
+            if (!isAdded || isDetached || _binding == null) return@observe
+            
+            try {
+                val totalWords = wordAdapter.itemCount
+                if (totalWords > 0) {
+                    binding.textProgress.text = getString(R.string.study_progress_format, position + 1, totalWords)
+                }
+                
+                binding.buttonPrevious.isEnabled = position > 0
+                binding.buttonNext.isEnabled = position < totalWords - 1
+            } catch (e: Exception) {
+                // 确保不会因为binding访问异常导致崩溃
             }
-            
-            binding.buttonPrevious.isEnabled = position > 0
-            binding.buttonNext.isEnabled = position < totalWords - 1
-            
         }
         
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            if (isLoading) {
-                binding.viewPagerWords.visibility = View.GONE
-                binding.textNoWords.visibility = View.GONE
+            // 确保Fragment仍然活跃且binding有效
+            if (!isAdded || isDetached || _binding == null) return@observe
+            
+            try {
+                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+                if (isLoading) {
+                    binding.viewPagerWords.visibility = View.GONE
+                    binding.textNoWords.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                // 确保不会因为binding访问异常导致崩溃
             }
         }
 
         // 观察收藏单词列表的变化
         viewModel.favoriteWords.observe(viewLifecycleOwner) { favoriteWords ->
-            // 更新适配器中的收藏列表
-            wordAdapter.setFavoriteWords(favoriteWords)
+            // 确保Fragment仍然活跃且binding有效
+            if (!isAdded || isDetached || _binding == null) return@observe
+            
+            try {
+                // 更新适配器中的收藏列表
+                wordAdapter.setFavoriteWords(favoriteWords)
+            } catch (e: Exception) {
+                // 确保不会因为binding访问异常导致崩溃
+            }
         }
         
         // 观察翻转单词列表的变化
         viewModel.flippedWords.observe(viewLifecycleOwner) { flippedWords ->
-            wordAdapter.setFlippedWords(flippedWords)
+            // 确保Fragment仍然活跃且binding有效
+            if (!isAdded || isDetached || _binding == null) return@observe
+            
+            try {
+                wordAdapter.setFlippedWords(flippedWords)
+            } catch (e: Exception) {
+                // 确保不会因为binding访问异常导致崩溃
+            }
         }
     }
     

@@ -14,6 +14,7 @@ import com.google.gson.Gson
 import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.entity.StudyRecord
 import com.justbyheart.vocabulary.data.entity.Word
+import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.JustbyheartWordCardBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,8 @@ import java.util.Calendar
  */
 class WordPagerAdapter(
     private val onFavoriteClick: (Word, Boolean) -> Unit,
-    private val onWordFlipped: (Long, Boolean) -> Unit // 单词卡片被翻转时的回调，参数：单词ID，是否翻转到背面
+    private val onWordFlipped: (Long, Boolean) -> Unit, // 单词卡片被翻转时的回调，参数：单词ID，是否翻转到背面
+    private val repository: WordRepository? // 添加repository参数
 ) : ListAdapter<Word, WordPagerAdapter.WordViewHolder>(WordDiffCallback()) {
 
     private var favoriteWords: Set<Long> = emptySet()
@@ -187,20 +189,19 @@ class WordPagerAdapter(
         private fun markWordAsMemorized(word: Word, isMemorized: Boolean) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    // 获取今日零点时间
-                    val today = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.time
-
                     // 通过Activity获取repository
                     val activity = getActivityFromContext(itemView.context)
                     if (activity is com.justbyheart.vocabulary.MainActivity) {
                         val repository = activity.getRepository()
                         
                         // 创建或更新学习记录
+                        val today = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }.time
+                        
                         val record = repository.getStudyRecordByWordIdAndDate(word.id, today) ?: StudyRecord(
                             wordId = word.id,
                             studyDate = today

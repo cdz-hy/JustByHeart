@@ -31,7 +31,7 @@ class WordDisplayViewModel(private val repository: WordRepository) : ViewModel()
 
     private fun loadFavoriteStatus(wordId: Long) {
         viewModelScope.launch {
-            _isFavorite.value = repository.isFavorite(wordId)
+            _isFavorite.value = repository.isWordFavorite(wordId)
         }
     }
 
@@ -40,9 +40,9 @@ class WordDisplayViewModel(private val repository: WordRepository) : ViewModel()
         val currentStatus = _isFavorite.value ?: false
         viewModelScope.launch {
             if (currentStatus) {
-                repository.removeFromFavorites(wordId)
+                repository.deleteFavoriteWordByWordId(wordId)
             } else {
-                repository.addToFavorites(wordId)
+                repository.insertFavoriteWord(com.justbyheart.vocabulary.data.entity.FavoriteWord(wordId = wordId))
             }
             _isFavorite.value = !currentStatus
         }
