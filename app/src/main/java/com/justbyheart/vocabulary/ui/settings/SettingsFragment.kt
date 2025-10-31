@@ -1,24 +1,41 @@
 package com.justbyheart.vocabulary.ui.settings
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
+import com.justbyheart.vocabulary.data.entity.StudyRecord
+import com.justbyheart.vocabulary.data.model.ExportData
+import com.justbyheart.vocabulary.data.model.ExportWordBank
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentSettingsBinding
 import com.justbyheart.vocabulary.utils.WordDataLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * 设置界面Fragment
@@ -33,6 +50,11 @@ class SettingsFragment : Fragment() {
     // ViewModel和SharedPreferences实例
     private lateinit var viewModel: SettingsViewModel
     private lateinit var sharedPreferences: SharedPreferences
+    
+    // 文件选择器
+    private val selectFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { importData(it) }
+    }
     
     companion object {
         // SharedPreferences相关常量
@@ -111,6 +133,16 @@ class SettingsFragment : Fragment() {
         // 设置词库选择按钮的点击事件
         binding.buttonSelectWordBank.setOnClickListener {
             showWordBankSelectionDialog()
+        }
+        
+        // 设置导出数据按钮的点击事件
+        binding.buttonExportData.setOnClickListener {
+            exportData()
+        }
+        
+        // 设置导入数据按钮的点击事件
+        binding.buttonImportData.setOnClickListener {
+            selectFileLauncher.launch("*/*")
         }
     }
     
@@ -399,6 +431,167 @@ class SettingsFragment : Fragment() {
         // 观察加载状态变化
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+    }
+    
+    /**
+     * 导出数据到JSON文件
+     */
+    private fun exportData() {
+        binding.buttonExportData.isEnabled = false
+        binding.textInitializeStatus.text = "正在准备导出数据..."
+        binding.textInitializeStatus.visibility = View.VISIBLE
+        
+        lifecycleScope.launch {
+            try {
+                // 获取所有词库
+                val wordBanks = WordDataLoader.getAvailableWordBanks()
+                val exportData = mutableListOf<ExportWordBank>()
+                
+                // 日期格式化器
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                
+                for (wordBank in wordBanks) {
+                    // 获取已背诵的单词及背诵时间
+                    val completedWordsWithRecords = viewModel.getCompletedWordsWithRecordsByWordBank(wordBank)
+                    val memorizedWords = completedWordsWithRecords.map { (word, record) ->
+                        listOf(
+                            word.english,
+                            word.chinese,
+                            dateFormat.format(record.studyDate) // 使用学习记录中的实际时间
+                        )
+                    }
+                    
+                    // 获取收藏的单词
+                    val favoriteWords = viewModel.getFavoriteWordsByWordBank(wordBank)
+                    val favoriteWordNames = favoriteWords.map { it.english }
+                    
+                    // 创建导出数据对象
+                    val exportWordBank = ExportWordBank(
+                        wordBankName = wordBank,
+                        memorizedWords = memorizedWords,
+                        favoriteWords = favoriteWordNames
+                    )
+                    
+                    exportData.add(exportWordBank)
+                }
+                
+                // 将数据转换为JSON格式
+                val gson = GsonBuilder().setPrettyPrinting().create()
+                val json = gson.toJson(exportData)
+                
+                // 创建文件
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val fileName = "vocabulary_data_${System.currentTimeMillis()}.json"
+                val file = File(downloadsDir, fileName)
+                
+                // 写入文件
+                FileWriter(file).use { writer ->
+                    writer.write(json)
+                }
+                
+                binding.textInitializeStatus.text = "数据导出成功: ${file.absolutePath}"
+                Toast.makeText(context, "数据导出成功: ${file.name}", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                binding.textInitializeStatus.text = "导出失败: ${e.message}"
+                Toast.makeText(context, "导出失败: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                binding.buttonExportData.isEnabled = true
+            }
+        }
+    }
+    
+    /**
+     * 从JSON文件导入数据
+     */
+    private fun importData(uri: Uri) {
+        binding.buttonImportData.isEnabled = false
+        binding.textInitializeStatus.text = "正在导入数据..."
+        binding.textInitializeStatus.visibility = View.VISIBLE
+        
+        lifecycleScope.launch {
+            try {
+                // 读取文件内容
+                val jsonString = requireContext().contentResolver.openInputStream(uri)?.bufferedReader().use { reader ->
+                    reader?.readText()
+                }
+                
+                if (jsonString.isNullOrEmpty()) {
+                    throw Exception("文件内容为空")
+                }
+                
+                // 解析JSON
+                val gson = Gson()
+                val listType = object : TypeToken<ExportData>() {}.type
+                val importData: ExportData = gson.fromJson(jsonString, listType)
+                
+                // 处理导入的数据
+                var importedRecords = 0
+                for (wordBankData in importData) {
+                    val wordBankName = wordBankData.wordBankName
+                    
+                    // 处理已背诵的单词
+                    for (memorizedWord in wordBankData.memorizedWords) {
+                        if (memorizedWord.size >= 3) {
+                            val englishWord = memorizedWord[0]
+                            val memorizationDateStr = memorizedWord[2]
+                            
+                            // 查找对应单词的ID
+                            val word = viewModel.getWordByEnglishAndWordBank(englishWord, wordBankName)
+                            if (word != null) {
+                                // 解析日期
+                                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                                val memorizationDate = dateFormat.parse(memorizationDateStr)
+                                
+                                if (memorizationDate != null) {
+                                    // 检查是否已存在相同日期的学习记录
+                                    val existingRecord = viewModel.getStudyRecordByWordIdAndDate(word.id, memorizationDate)
+                                    
+                                    if (existingRecord != null) {
+                                        // 更新现有记录
+                                        val updatedRecord = existingRecord.copy(isCompleted = true)
+                                        viewModel.updateStudyRecord(updatedRecord)
+                                    } else {
+                                        // 创建新记录
+                                        val newRecord = StudyRecord(
+                                            wordId = word.id,
+                                            studyDate = memorizationDate,
+                                            isCompleted = true
+                                        )
+                                        viewModel.insertStudyRecord(newRecord)
+                                    }
+                                    
+                                    importedRecords++
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 处理收藏的单词
+                    for (favoriteWordName in wordBankData.favoriteWords) {
+                        val word = viewModel.getWordByEnglishAndWordBank(favoriteWordName, wordBankName)
+                        if (word != null) {
+                            val isFavorite = viewModel.isWordFavorite(word.id)
+                            if (!isFavorite) {
+                                viewModel.insertFavoriteWord(word.id)
+                                importedRecords++
+                            }
+                        }
+                    }
+                }
+                
+                binding.textInitializeStatus.text = "数据导入完成，共导入 $importedRecords 条记录"
+                Toast.makeText(context, "数据导入完成，共导入 $importedRecords 条记录", Toast.LENGTH_LONG).show()
+                
+                // 发送广播通知其他界面刷新
+                val intent = android.content.Intent("com.justbyheart.vocabulary.DATA_IMPORTED")
+                requireActivity().sendBroadcast(intent)
+            } catch (e: Exception) {
+                binding.textInitializeStatus.text = "导入失败: ${e.message}"
+                Toast.makeText(context, "导入失败: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                binding.buttonImportData.isEnabled = true
+            }
         }
     }
     
