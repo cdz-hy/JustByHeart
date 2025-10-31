@@ -123,6 +123,13 @@ class WordRepository(
     suspend fun getCompletedWordsForDate(date: Date): List<Word> = studyRecordDao.getCompletedWordsForDate(date)
     
     /**
+     * 获取指定日期标记为已背的单词
+     * @param date 学习日期
+     * @return 指定日期标记为已背的单词列表
+     */
+    suspend fun getMemorizedWordsByDate(date: Date): List<Word> = studyRecordDao.getMemorizedWordsByDate(date)
+    
+    /**
      * 获取指定词库中已完成的单词
      * @param wordBank 词库名称
      * @return 指定词库中已完成的单词列表

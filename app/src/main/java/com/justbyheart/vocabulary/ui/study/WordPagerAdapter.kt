@@ -38,6 +38,7 @@ class WordPagerAdapter(
 
     private var favoriteWords: Set<Long> = emptySet()
     private var flippedWords: Set<Long> = emptySet()
+    private var memorizedWords: Set<Long> = emptySet() // 添加已背单词集合
 
     /**
      * 设置收藏单词列表
@@ -53,6 +54,24 @@ class WordPagerAdapter(
             val index = currentList.indexOfFirst { it.id == id }
             if (index != -1) {
                 notifyItemChanged(index, "favorite")
+            }
+        }
+    }
+
+    /**
+     * 设置已背单词列表
+     * @param words 已背的单词列表
+     */
+    fun setMemorizedWords(words: List<Word>) {
+        val newMemorizedIds = words.map { it.id }.toSet()
+        val oldMemorizedIds = memorizedWords
+        memorizedWords = newMemorizedIds
+
+        val changedIds = newMemorizedIds.union(oldMemorizedIds) - newMemorizedIds.intersect(oldMemorizedIds)
+        changedIds.forEach { id ->
+            val index = currentList.indexOfFirst { it.id == id }
+            if (index != -1) {
+                notifyItemChanged(index, "memorized")
             }
         }
     }
@@ -79,12 +98,17 @@ class WordPagerAdapter(
     override fun onBindViewHolder(holder: WordViewHolder, position: Int) {
         val word = getItem(position)
         holder.bind(word, favoriteWords.contains(word.id), flippedWords.contains(word.id))
+        // 设置已背状态
+        holder.updateMemorizedStatus(memorizedWords.contains(word.id))
     }
 
     override fun onBindViewHolder(holder: WordViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.contains("favorite")) {
             val word = getItem(position)
             holder.updateFavoriteStatus(favoriteWords.contains(word.id))
+        } else if (payloads.contains("memorized")) {
+            val word = getItem(position)
+            holder.updateMemorizedStatus(memorizedWords.contains(word.id))
         } else {
             super.onBindViewHolder(holder, position, payloads)
         }
@@ -113,6 +137,24 @@ class WordPagerAdapter(
         fun bind(word: Word, isFavorite: Boolean, isFlipped: Boolean) {
             this.word = word
             this.isFavorite = isFavorite
+            // 检查单词是否已经被标记为已背
+            CoroutineScope(Dispatchers.Main).launch {
+                val activity = getActivityFromContext(itemView.context)
+                if (activity is com.justbyheart.vocabulary.MainActivity) {
+                    val repository = activity.getRepository()
+                    val today = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.time
+                    
+                    val record = repository.getStudyRecordByWordIdAndDate(word.id, today)
+                    this@WordViewHolder.isMemorized = record?.isCompleted == true && record.correctCount == 0 && record.wrongCount == 0
+                    updateMemorizedButton()
+                }
+            }
+            
             // 绑定单词各项信息到对应视图组件
             binding.textEnglish.text = word.english
             binding.textChinese.text = word.chinese
@@ -152,6 +194,36 @@ class WordPagerAdapter(
                 this.isMemorized = !this.isMemorized
                 updateMemorizedButton()
                 markWordAsMemorized(word, this.isMemorized)
+                // 通知适配器更新已背状态
+                val activity = getActivityFromContext(itemView.context)
+                if (activity is com.justbyheart.vocabulary.MainActivity) {
+                    val repository = activity.getRepository()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val today = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }.time
+                        
+                        val memorizedWords = repository.getMemorizedWordsByDate(today)
+                        // 使用正确的方式获取适配器并更新已背单词列表
+                        val recyclerView = binding.root.parent as? RecyclerView
+                        val adapter = recyclerView?.adapter as? WordPagerAdapter
+                        adapter?.setMemorizedWords(memorizedWords)
+                        
+                        // 更新当前item的状态
+                        val currentPosition = bindingAdapterPosition
+                        if (currentPosition != RecyclerView.NO_POSITION) {
+                            adapter?.notifyItemChanged(currentPosition, "memorized")
+                        }
+                    }
+                }
+            }
+
+            // 设置播放按钮点击事件
+            binding.buttonSpeak.setOnClickListener {
+                playPronunciation(word.english)
             }
 
             // 设置卡片点击事件（用于翻转卡片）
@@ -160,12 +232,19 @@ class WordPagerAdapter(
             }
 
             updateFavoriteButton()
-            updateMemorizedButton()
         }
 
         fun updateFavoriteStatus(isFavorite: Boolean) {
             this.isFavorite = isFavorite
             updateFavoriteButton()
+        }
+
+        /**
+         * 更新已背按钮状态
+         */
+        fun updateMemorizedStatus(isMemorized: Boolean) {
+            this.isMemorized = isMemorized
+            updateMemorizedButton()
         }
 
         /**
@@ -444,6 +523,13 @@ class WordPagerAdapter(
             })
 
             anim1.start()
+        }
+
+        /**
+         * 获取当前ViewHolder的位置
+         */
+        private fun getCurrentPosition(): Int {
+            return bindingAdapterPosition
         }
     }
 

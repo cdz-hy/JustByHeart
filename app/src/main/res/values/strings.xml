@@ -39,6 +39,7 @@
     <string name="test_score">测试得分</string>
     <string name="correct_answer">正确答案</string>
     <string name="your_answer">你的答案</string>
+    <string name="tested_words_count">测试单词数: %1$d个</string>
     
     <!-- Settings Fragment -->
     <string name="daily_word_count">每日单词数量</string>

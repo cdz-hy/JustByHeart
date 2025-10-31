@@ -111,4 +111,12 @@ interface StudyRecordDao {
      */
     @Query("SELECT * FROM study_records WHERE wordId = :wordId AND studyDate = :studyDate")
     suspend fun getStudyRecordByWordIdAndDate(wordId: Long, studyDate: Date): StudyRecord?
+    
+    /**
+     * 获取指定日期标记为已背的单词
+     * @param date 学习日期
+     * @return 指定日期标记为已背的单词列表
+     */
+    @Query("SELECT w.* FROM words w INNER JOIN study_records s ON w.id = s.wordId WHERE s.studyDate = :date AND s.isCompleted = 1 AND s.correctCount = 0 AND s.wrongCount = 0")
+    suspend fun getMemorizedWordsByDate(date: Date): List<Word>
 }

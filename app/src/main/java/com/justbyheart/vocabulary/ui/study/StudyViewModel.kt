@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.justbyheart.vocabulary.VocabularyApplication
 import com.justbyheart.vocabulary.data.entity.DailyGoal
 import com.justbyheart.vocabulary.data.entity.StudyRecord
 import com.justbyheart.vocabulary.data.entity.Word
@@ -271,7 +272,19 @@ class StudyViewModel(
     }
     
     /**
-     * 获取今日零点时间
+     * 获取指定日期已完成的单词ID列表
+     *
+     * @param date 指定日期
+     * @return 已完成的单词ID列表
+     */
+    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> {
+        return repository.getCompletedWordIdsForDate(date)
+    }
+
+    /**
+     * 获取今天零点的时间戳
+     *
+     * @return 今天零点的时间戳
      */
     fun getTodayZeroed(): Date {
         return Calendar.getInstance().apply {
@@ -283,9 +296,20 @@ class StudyViewModel(
     }
     
     /**
-     * 获取指定日期已完成的单词ID列表
+     * 获取当前词库中的单词
+     *
+     * @param wordIds 单词ID列表
+     * @return 属于当前词库的单词ID列表
      */
-    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> {
-        return repository.getCompletedWordIdsForDate(date)
+    suspend fun getWordsInCurrentBank(wordIds: List<Long>, context: Context): List<Long> {
+        // 获取当前词库
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+        
+        // 获取单词详情
+        val words = repository.getWordsByIds(wordIds)
+        
+        // 筛选出属于当前词库的单词
+        return words.filter { it.wordBank == currentWordBank }.map { it.id }
     }
 }

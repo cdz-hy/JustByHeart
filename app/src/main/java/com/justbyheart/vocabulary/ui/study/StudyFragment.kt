@@ -111,13 +111,21 @@ class StudyFragment : Fragment() {
                         // 如果没有未完成的翻转单词，显示提示信息
                         android.widget.Toast.makeText(requireContext(), R.string.select_flipped_word_first, android.widget.Toast.LENGTH_SHORT).show()
                     } else {
-                        // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
-                        val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
-                            filteredFlippedWords.toLongArray()
-                        )
-                        // 检查NavController是否可用
-                        if (isAdded) {
-                            findNavController().navigate(action)
+                        // 添加词库筛选：确保翻转的单词属于当前词库
+                        val wordsInCurrentBank = viewModel.getWordsInCurrentBank(filteredFlippedWords, requireContext())
+                        
+                        if (wordsInCurrentBank.isEmpty()) {
+                            // 如果当前词库中没有翻转的单词，显示提示信息
+                            android.widget.Toast.makeText(requireContext(), R.string.select_flipped_word_first, android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            // 创建一个导航动作，并将在ViewModel中收集到的已翻转单词ID列表作为参数传递给测试Fragment
+                            val action = StudyFragmentDirections.actionStudyFragmentToTestFragment(
+                                wordsInCurrentBank.toLongArray()
+                            )
+                            // 检查NavController是否可用
+                            if (isAdded) {
+                                findNavController().navigate(action)
+                            }
                         }
                     }
                 }

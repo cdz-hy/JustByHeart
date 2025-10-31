@@ -21,7 +21,8 @@ data class TestQuestion(
 
 data class TestResult(
     val correctAnswers: Int,
-    val totalQuestions: Int
+    val totalQuestions: Int,
+    val incorrectWords: List<Word>  // 添加错误单词列表
 )
 
 class TestViewModel(private val repository: WordRepository) : ViewModel() {
@@ -48,6 +49,7 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
     private var currentIndex = 0
     private var correctAnswersCount = 0
     private val wordResults = mutableMapOf<Long, Pair<Boolean?, Boolean?>>() // wordId -> Pair(isE2CCorrect, isC2ECorrect)
+    private val incorrectWords = mutableListOf<Word>() // 记录错误的单词
 
     fun startTest(wordIds: LongArray) {
         viewModelScope.launch {
@@ -57,6 +59,7 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
             if (questions.isNotEmpty()) {
                 currentIndex = 0
                 correctAnswersCount = 0
+                incorrectWords.clear()
                 showCurrentQuestion()
             }
             _isLoading.value = false
@@ -108,7 +111,7 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
         } else {
             viewModelScope.launch {
                 updateStudyRecords()
-                _testResult.value = TestResult(correctAnswersCount, questions.size)
+                _testResult.value = TestResult(correctAnswersCount, questions.size, incorrectWords.toList())
             }
         }
     }
@@ -129,6 +132,11 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
         val isCorrect = answerIndex == currentQ.correctAnswerIndex
         if (isCorrect) {
             correctAnswersCount++
+        } else {
+            // 记录错误单词
+            if (!incorrectWords.contains(currentQ.word)) {
+                incorrectWords.add(currentQ.word)
+            }
         }
 
         val wordId = currentQ.word.id
@@ -172,4 +180,7 @@ class TestViewModel(private val repository: WordRepository) : ViewModel() {
     }
 
     fun getTotalQuestions(): Int = questions.size
+    
+    // 获取错误单词列表
+    fun getIncorrectWords(): List<Word> = incorrectWords.toList()
 }

@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <ImageButton
+        android:id="@+id/button_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_arrow_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/text_progress"
         android:layout_width="wrap_content"
@@ -50,7 +61,7 @@
             android:id="@+id/button_option1"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="70dp"
             android:layout_marginBottom="12dp"
             android:textAlignment="textStart"
             android:textSize="16sp"
@@ -60,7 +71,7 @@
             android:id="@+id/button_option2"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="70dp"
             android:layout_marginBottom="12dp"
             android:textAlignment="textStart"
             android:textSize="16sp"
@@ -70,7 +81,7 @@
             android:id="@+id/button_option3"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="70dp"
             android:layout_marginBottom="12dp"
             android:textAlignment="textStart"
             android:textSize="16sp"
@@ -80,7 +91,7 @@
             android:id="@+id/button_option4"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="70dp"
             android:layout_marginBottom="24dp"
             android:textAlignment="textStart"
             android:textSize="16sp"
@@ -140,6 +151,35 @@
             android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
             android:textColor="?attr/colorOnSurfaceVariant"
             tools:text="80%" />
+        
+        <TextView
+            android:id="@+id/text_tested_words_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            tools:text="测试单词数: 10个" />
+
+        <TextView
+            android:id="@+id/text_incorrect_words_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="错误单词"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorError"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_incorrect_words"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1"
+            android:visibility="gone"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:itemCount="3"
+            tools:listitem="@layout/item_incorrect_word" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_finish"
