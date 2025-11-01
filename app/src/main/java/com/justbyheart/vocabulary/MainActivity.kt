@@ -1,15 +1,30 @@
 package com.justbyheart.vocabulary
 
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.ActivityMainBinding
+import com.justbyheart.vocabulary.utils.WordDataLoader
+import kotlinx.coroutines.launch
 
 /**
  * 应用主活动类
@@ -50,6 +65,10 @@ class MainActivity : AppCompatActivity() {
      * 初始化界面布局和导航组件
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+        val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
+        val themeName = sharedPreferences.getString("theme", "Theme.JustByHeartVocabulary")
+        setTheme(resources.getIdentifier(themeName, "style", packageName))
+
         super.onCreate(savedInstanceState)
         
         // 初始化ViewBinding
@@ -84,44 +103,48 @@ class MainActivity : AppCompatActivity() {
      * 实现点击底部导航项时自动切换对应的Fragment。
      */
     private fun setupNavigation() {
-        // 获取NavHostFragment实例
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        
-        // 获取NavController
-        navController = navHostFragment.navController
-        
-        // 将底部导航栏与NavController关联
-        // 这样点击底部导航项时会自动导航到对应的Fragment
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigation.setupWithNavController(navController)
-        
-        // 解决部分情况下无法跳转到首页的问题
-        bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_home -> {
-                    // 使用navigate方法确保能正确跳转到首页
-                    navController.navigate(R.id.navigation_home)
-                    true
+        try {
+            // 获取NavHostFragment实例
+            val navHostFragment = supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            
+            // 获取NavController
+            navController = navHostFragment.navController
+            
+            // 将底部导航栏与NavController关联
+            // 这样点击底部导航项时会自动导航到对应的Fragment
+            val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            bottomNavigation.setupWithNavController(navController)
+            
+            // 解决部分情况下无法跳转到首页的问题
+            bottomNavigation.setOnItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.navigation_home -> {
+                        // 使用navigate方法确保能正确跳转到首页
+                        navController.navigate(R.id.navigation_home)
+                        true
+                    }
+                    R.id.navigation_study -> {
+                        navController.navigate(R.id.navigation_study)
+                        true
+                    }
+                    R.id.navigation_review -> {
+                        navController.navigate(R.id.navigation_review)
+                        true
+                    }
+                    R.id.navigation_favorites -> {
+                        navController.navigate(R.id.navigation_favorites)
+                        true
+                    }
+                    R.id.navigation_settings -> {
+                        navController.navigate(R.id.navigation_settings)
+                        true
+                    }
+                    else -> false
                 }
-                R.id.navigation_study -> {
-                    navController.navigate(R.id.navigation_study)
-                    true
-                }
-                R.id.navigation_review -> {
-                    navController.navigate(R.id.navigation_review)
-                    true
-                }
-                R.id.navigation_favorites -> {
-                    navController.navigate(R.id.navigation_favorites)
-                    true
-                }
-                R.id.navigation_settings -> {
-                    navController.navigate(R.id.navigation_settings)
-                    true
-                }
-                else -> false
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
     

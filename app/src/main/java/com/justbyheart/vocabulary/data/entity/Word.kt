@@ -18,8 +18,11 @@ import kotlinx.parcelize.Parcelize
  * @property englishDefinitions 英文释义（可选）
  * @property examples 例句 (例句1\n例句2)
  * @property exampleTranslations 例句翻译 (例句翻译1\n例句翻译2)
- * @property difficulty 难度等级，范围1-5，1为最简单，5为最难
  * @property category 单词分类，如"general"、"academic"、"business"等
+ * @property synos 同义词 (pos: 词性, tran: 中文释义, hwds: 同义词列表)
+ * @property phrases 短语 (pContent: 短语, pCn: 中文释义)
+ * @property relWord 同根词 (pos: 词性, words: 相关派生词及释义)
+ * @property wordBank 词库来源类别
  */
 @Parcelize
 @Entity(tableName = "words")
@@ -32,6 +35,9 @@ data class Word(
     val definition: String? = null, // 英文释义 (pos. 英文释义；pos. 英文释义)
     val example: String? = null,           // 例句 (例句1\n例句2)
     val exampleTranslation: String? = null, // 例句翻译 (例句翻译1\n例句翻译2)
-    val difficulty: Int = 1,                // 难度等级 (1-5)
-    val category: String = "general"        // 单词分类
+    val category: String = "general",        // 单词分类
+    val synos: String? = null,              // 同义词 (pos: 词性, tran: 中文释义, hwds: 同义词列表)
+    val phrases: String? = null,            // 短语 (pContent: 短语, pCn: 中文释义)
+    val relWord: String? = null,             // 同根词 (pos: 词性, words: 相关派生词及释义)
+    val wordBank: String = "vocabulary"     // 词库来源类别
 ) : Parcelable

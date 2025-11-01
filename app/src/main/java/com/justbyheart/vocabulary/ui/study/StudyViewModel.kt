@@ -1,9 +1,11 @@
 package com.justbyheart.vocabulary.ui.study
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.justbyheart.vocabulary.VocabularyApplication
 import com.justbyheart.vocabulary.data.entity.DailyGoal
 import com.justbyheart.vocabulary.data.entity.StudyRecord
 import com.justbyheart.vocabulary.data.entity.Word
@@ -52,28 +54,44 @@ class StudyViewModel(
     private var todaysWordList: List<Word>? = null
     private var dateOfTodaysWordList: Date? = null
     
+    // SharedPreferences常量
+    private companion object {
+        const val PREFS_NAME = "vocabulary_settings"
+        const val KEY_DAILY_WORD_COUNT = "daily_word_count"   // 每日单词数键名
+        const val KEY_CURRENT_WORD_BANK = "current_word_bank"
+        const val DEFAULT_WORD_BANK = "六级核心"
+        const val DEFAULT_DAILY_WORD_COUNT = 10               // 默认每日单词数
+    }
+    
     /**
      * 加载今日学习单词
      * 
      * 根据今日的学习目标数量，获取相应数量的单词，
      */
-    fun loadTodayWords() {
+    fun loadTodayWords(context: Context) {
         viewModelScope.launch {
             _isLoading.value = true
             val today = getTodayZeroed()
+            
+            // 获取当前词库
+            val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+            
+            // 获取用户设置的每日单词数
+            val userSetDailyWordCount = sharedPreferences.getInt(KEY_DAILY_WORD_COUNT, DEFAULT_DAILY_WORD_COUNT)
 
             var dailyGoal = repository.getDailyGoalByDate(today)
             var currentDailyWordIds: List<Long>
 
             // 如果今日目标不存在，或者每日单词ID列表为空，则生成新的今日单词列表并保存
             if (dailyGoal == null || dailyGoal.dailyWordIds.isEmpty()) {
-                val targetCount = dailyGoal?.targetWordCount ?: 10
-                val newWords = repository.getUncompletedWords(targetCount)
+                // 从当前词库中获取未完成的单词（按ID排序，获取最早添加的单词）
+                val newWords = repository.getUncompletedWordsByWordBankOrdered(currentWordBank, dailyGoal?.targetWordCount ?: userSetDailyWordCount)
                 currentDailyWordIds = newWords.map { it.id }
                 
                 val updatedGoal = (dailyGoal ?: DailyGoal(date = today)).copy(
                     dailyWordIds = currentDailyWordIds.joinToString(","),
-                    targetWordCount = targetCount,
+                    targetWordCount = dailyGoal?.targetWordCount ?: userSetDailyWordCount,
                     flippedWordIds = dailyGoal?.flippedWordIds ?: ""
                 )
                 repository.insertDailyGoal(updatedGoal)
@@ -82,25 +100,42 @@ class StudyViewModel(
                 // 如果今日目标存在且每日单词ID列表不为空，则使用存储的ID列表
                 currentDailyWordIds = dailyGoal.dailyWordIds.split(",").map { it.toLong() }
 
-                // 检查目标数量是否发生变化
-                val newTargetCount = dailyGoal.targetWordCount
-                if (currentDailyWordIds.size != newTargetCount) {
-                    if (currentDailyWordIds.size < newTargetCount) {
-                        // 需要补充单词
-                        val wordsToSupplementCount = newTargetCount - currentDailyWordIds.size
-                        val additionalWords = repository.getAdditionalUncompletedWords(wordsToSupplementCount, currentDailyWordIds)
-                        currentDailyWordIds = currentDailyWordIds + additionalWords.map { it.id }
-                    } else {
-                        // 需要删减单词
-                        currentDailyWordIds = currentDailyWordIds.take(newTargetCount)
-                    }
-                    // 更新DailyGoal中的dailyWordIds
+                // 检查目标中的单词是否都属于当前词库
+                val wordsInGoal = repository.getWordsByIds(currentDailyWordIds)
+                val wordsNotInCurrentBank = wordsInGoal.filter { it.wordBank != currentWordBank }
+                
+                // 如果有单词不属于当前词库，则需要重新生成单词列表
+                if (wordsNotInCurrentBank.isNotEmpty()) {
+                    // 从当前词库中获取未完成的单词（按ID排序，获取最早添加的单词）
+                    val newWords = repository.getUncompletedWordsByWordBankOrdered(currentWordBank, dailyGoal.targetWordCount)
+                    currentDailyWordIds = newWords.map { it.id }
+                    
+                    // 更新dailyGoal中的单词ID列表
                     val updatedGoal = dailyGoal.copy(
-                        dailyWordIds = currentDailyWordIds.joinToString(","),
-                        flippedWordIds = dailyGoal.flippedWordIds
+                        dailyWordIds = currentDailyWordIds.joinToString(",")
                     )
                     repository.updateDailyGoal(updatedGoal)
                     dailyGoal = updatedGoal
+                } else {
+                    // 检查目标数量是否发生变化
+                    if (currentDailyWordIds.size != dailyGoal.targetWordCount) {
+                        if (currentDailyWordIds.size < dailyGoal.targetWordCount) {
+                            // 需要补充单词，从当前词库中获取
+                            val wordsToSupplementCount = dailyGoal.targetWordCount - currentDailyWordIds.size
+                            val additionalWords = repository.getAdditionalUncompletedWordsByWordBank(currentWordBank, wordsToSupplementCount, currentDailyWordIds)
+                            currentDailyWordIds = currentDailyWordIds + additionalWords.map { it.id }
+                        } else {
+                            // 需要删减单词
+                            currentDailyWordIds = currentDailyWordIds.take(dailyGoal.targetWordCount)
+                        }
+                        // 更新DailyGoal中的dailyWordIds
+                        val updatedGoal = dailyGoal.copy(
+                            dailyWordIds = currentDailyWordIds.joinToString(","),
+                            flippedWordIds = dailyGoal.flippedWordIds
+                        )
+                        repository.updateDailyGoal(updatedGoal)
+                        dailyGoal = updatedGoal
+                    }
                 }
             }
 
@@ -121,15 +156,6 @@ class StudyViewModel(
         }
     }
     
-    private fun getTodayZeroed(): Date {
-        return Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.time
-    }
-
     /**
      * 更新当前学习位置
      * 
@@ -148,9 +174,9 @@ class StudyViewModel(
     fun toggleFavorite(wordId: Long, isFavorite: Boolean) {
         viewModelScope.launch {
             if (isFavorite) {
-                repository.addToFavorites(wordId)
+                repository.insertFavoriteWord(com.justbyheart.vocabulary.data.entity.FavoriteWord(wordId = wordId))
             } else {
-                repository.removeFromFavorites(wordId)
+                repository.deleteFavoriteWordByWordId(wordId)
             }
         }
     }
@@ -213,13 +239,92 @@ class StudyViewModel(
             }
         }
     }
-
+    
     /**
-     * 获取今日已完成的单词ID列表
+     * 标记单词为已掌握
+     * 
+     * @param wordId 单词ID
+     * @param isMemorized true表示标记为已掌握，false表示取消已掌握标记
+     */
+    fun markAsMemorized(wordId: Long, isMemorized: Boolean) {
+        viewModelScope.launch {
+            val today = getTodayZeroed()
+            var studyRecord = repository.getStudyRecordByWordIdAndDate(wordId, today)
+            
+            if (studyRecord == null) {
+                // 如果学习记录不存在，创建新的记录
+                studyRecord = StudyRecord(
+                    wordId = wordId,
+                    studyDate = today,
+                    isCompleted = isMemorized
+                )
+            } else {
+                // 如果学习记录存在，更新完成状态
+                studyRecord = studyRecord.copy(isCompleted = isMemorized)
+            }
+            
+            repository.insertStudyRecord(studyRecord)
+            
+            // 如果是标记为已掌握，同时更新今日目标的完成计数
+            if (isMemorized) {
+                val dailyGoal = repository.getDailyGoalByDate(today)
+                dailyGoal?.let {
+                    val completedCount = repository.getCompletedWordsCountByDate(today)
+                    repository.updateDailyGoalCompletedCount(today, completedCount)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 获取指定日期已完成的单词ID列表
+     *
+     * @param date 指定日期
      * @return 已完成的单词ID列表
      */
-    suspend fun getCompletedWordIdsForToday(): List<Long> {
-        val today = getTodayZeroed()
-        return repository.getCompletedWordIdsForDate(today)
+    suspend fun getCompletedWordIdsForDate(date: Date): List<Long> {
+        return repository.getCompletedWordIdsForDate(date)
+    }
+
+    /**
+     * 获取今天零点的时间戳
+     *
+     * @return 今天零点的时间戳
+     */
+    fun getTodayZeroed(): Date {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.time
+    }
+    
+    /**
+     * 获取当前词库中的单词
+     *
+     * @param wordIds 单词ID列表
+     * @return 属于当前词库的单词ID列表
+     */
+    suspend fun getWordsInCurrentBank(wordIds: List<Long>, context: Context): List<Long> {
+        // 获取当前词库
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
+        
+        // 获取单词详情
+        val words = repository.getWordsByIds(wordIds)
+        
+        // 筛选出属于当前词库的单词
+        return words.filter { it.wordBank == currentWordBank }.map { it.id }
+    }
+    
+    /**
+     * 获取指定日期标记为已背的单词
+     * 
+     * @param date 指定日期
+     * @return 已背的单词列表
+     */
+    suspend fun getMemorizedWordsByDate(date: Date): List<Word> {
+        return repository.getMemorizedWordsByDate(date)
     }
 }

@@ -16,6 +16,10 @@ import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.entity.Word
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentWordDisplayBinding
+import com.justbyheart.vocabulary.utils.JsonPhraseItem
+import com.justbyheart.vocabulary.utils.JsonRelItem
+import com.justbyheart.vocabulary.utils.JsonRelWordItem
+import com.justbyheart.vocabulary.utils.JsonSynoItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -100,6 +104,13 @@ class WordDisplayFragment : Fragment() {
                     formattedExamples.append(exampleTranslations[i]).append("\n\n")
                 }
                 binding.textExample.text = formattedExamples.toString().trimEnd() // Remove trailing newlines
+
+                // Parse and display synos, phrases, and relWord
+                val gson = Gson()
+                binding.textSynos.text = parseSynos(gson, word.synos)
+                binding.textPhrases.text = parsePhrases(gson, word.phrases)
+                binding.textRelWord.text = parseRelWord(gson, word.relWord)
+
             } else {
                 Toast.makeText(context, R.string.word_not_found, Toast.LENGTH_SHORT).show()
                 findNavController().popBackStack()
@@ -111,6 +122,52 @@ class WordDisplayFragment : Fragment() {
 
         viewModel.isFavorite.observe(viewLifecycleOwner) { isFavorite ->
             binding.buttonFavorite.isSelected = isFavorite
+        }
+    }
+
+    private fun parseSynos(gson: Gson, json: String?): String {
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonSynoItem::class.java).type
+            val synos: List<com.justbyheart.vocabulary.utils.JsonSynoItem> = gson.fromJson(json, type)
+            synos.joinToString("\n") { syno: com.justbyheart.vocabulary.utils.JsonSynoItem ->
+                val hwds = syno.hwds?.joinToString(", ") { it: com.justbyheart.vocabulary.utils.JsonHwd -> it.w ?: "" } ?: ""
+                "${syno.pos ?: ""}. ${syno.tran ?: ""} - [${hwds}]"
+            }
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
+        }
+    }
+
+    private fun parsePhrases(gson: Gson, json: String?): String {
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonPhraseItem::class.java).type
+            val phrases: List<com.justbyheart.vocabulary.utils.JsonPhraseItem> = gson.fromJson(json, type)
+            phrases.joinToString("\n") { it: com.justbyheart.vocabulary.utils.JsonPhraseItem -> "${it.pContent ?: ""} - ${it.pCn ?: ""}" }
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
+        }
+    }
+
+    private fun parseRelWord(gson: Gson, json: String?): String {
+        if (json == null || json.trim().isEmpty()) return ""
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(List::class.java, com.justbyheart.vocabulary.utils.JsonRelItem::class.java).type
+            val rels: List<com.justbyheart.vocabulary.utils.JsonRelItem> = gson.fromJson(json, type)
+            val builder = StringBuilder()
+            rels.forEach { rel: com.justbyheart.vocabulary.utils.JsonRelItem ->
+                builder.append("${rel.pos ?: ""}.\n")
+                rel.words?.forEach { word: com.justbyheart.vocabulary.utils.JsonRelWordItem ->
+                    builder.append("  - ${word.hwd ?: ""}: (${word.tran ?: ""})\n")
+                }
+            }
+            builder.toString().trimEnd()
+        } catch (e: Exception) {
+            // 如果解析失败，则直接返回原始文本
+            json
         }
     }
 
@@ -183,12 +240,12 @@ class WordDisplayFragment : Fragment() {
                         if (!phonetic.audio.isNullOrEmpty()) {
                             // 检查audio字段是否是完整URL
                             val audioUrl = phonetic.audio
-                            val finalUrl = if (audioUrl!!.startsWith("//")) {
+                            val finalUrl = if (audioUrl != null && audioUrl.startsWith("//")) {
                                 "https:$audioUrl"
-                            } else if (audioUrl.startsWith("/")) {
+                            } else if (audioUrl != null && audioUrl.startsWith("/")) {
                                 "https://api.dictionaryapi.dev$audioUrl"
                             } else {
-                                audioUrl
+                                audioUrl ?: ""
                             }
                             return finalUrl
                         }

@@ -14,6 +14,13 @@ interface FavoriteWordDao {
     """)
     fun getFavoriteWords(): LiveData<List<Word>>
 
+    @Query("""
+        SELECT w.* FROM words w 
+        INNER JOIN favorite_words f ON w.id = f.wordId 
+        ORDER BY f.addedDate DESC
+    """)
+    suspend fun getAllFavoriteWordsWithDetails(): List<Word>
+
     @Query("SELECT * FROM favorite_words WHERE wordId = :wordId")
     suspend fun getFavoriteByWordId(wordId: Long): FavoriteWord?
 

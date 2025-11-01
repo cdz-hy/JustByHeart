@@ -27,4 +27,45 @@
         <item name="colorSurfaceInverse">@color/md_theme_light_inverseSurface</item>
         <item name="colorPrimaryInverse">@color/md_theme_light_inversePrimary</item>
     </style>
+
+    <style name="CustomDialogTheme" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMajor">80%</item>
+        <item name="android:windowMinWidthMinor">80%</item>
+    </style>
+
+    <style name="Theme.JustByHeart.MorandiBlue" parent="Theme.JustByHeartVocabulary">
+        <item name="colorPrimary">@color/morandi_blue_primary</item>
+        <item name="colorOnPrimary">@color/morandi_blue_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/morandi_blue_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/morandi_blue_onPrimaryContainer</item>
+    </style>
+
+    <style name="Theme.JustByHeart.MorandiGreen" parent="Theme.JustByHeartVocabulary">
+        <item name="colorPrimary">@color/morandi_green_primary</item>
+        <item name="colorOnPrimary">@color/morandi_green_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/morandi_green_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/morandi_green_onPrimaryContainer</item>
+    </style>
+
+    <style name="Theme.JustByHeart.MorandiPink" parent="Theme.JustByHeartVocabulary">
+        <item name="colorPrimary">@color/morandi_pink_primary</item>
+        <item name="colorOnPrimary">@color/morandi_pink_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/morandi_pink_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/morandi_pink_onPrimaryContainer</item>
+    </style>
+
+    <style name="Theme.JustByHeart.MorandiGrey" parent="Theme.JustByHeartVocabulary">
+        <item name="colorPrimary">@color/morandi_grey_primary</item>
+        <item name="colorOnPrimary">@color/morandi_grey_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/morandi_grey_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/morandi_grey_onPrimaryContainer</item>
+    </style>
+
+    <style name="Theme.JustByHeart.MorandiBrown" parent="Theme.JustByHeartVocabulary">
+        <item name="colorPrimary">@color/morandi_brown_primary</item>
+        <item name="colorOnPrimary">@color/morandi_brown_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/morandi_brown_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/morandi_brown_onPrimaryContainer</item>
+    </style>
 </resources>

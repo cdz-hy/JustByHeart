@@ -82,8 +82,11 @@ interface StudyRecordDao {
      */
     @Query("SELECT COUNT(DISTINCT wordId) FROM study_records WHERE isCompleted = 1")
     suspend fun getMemorizedWordsCount(): Int
-
-    @Query("SELECT wordId FROM study_records WHERE studyDate = :date AND isCompleted = 1")
+    
+    @Query("SELECT COUNT(DISTINCT wordId) FROM study_records WHERE isCompleted = 1 AND wordId IN (:wordIds)")
+    suspend fun getMemorizedWordsCountByIds(wordIds: List<Long>): Int
+    
+    @Query("SELECT wordId FROM study_records WHERE DATE(studyDate/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch') AND isCompleted = 1")
     suspend fun getCompletedWordIdsForDate(date: Date): List<Long>
 
     @Query("SELECT COUNT(DISTINCT wordId) FROM study_records WHERE wordId IN (:wordIds) AND studyDate = :date AND isCompleted = 1")
@@ -93,6 +96,14 @@ interface StudyRecordDao {
     suspend fun getCompletedWordsForDate(date: Date): List<Word>
 
     /**
+     * 根据单词ID列表获取已完成的单词
+     * @param wordIds 单词ID列表
+     * @return 已完成的单词列表
+     */
+    @Query("SELECT w.* FROM words w INNER JOIN study_records s ON w.id = s.wordId WHERE w.id IN (:wordIds) AND s.isCompleted = 1")
+    suspend fun getCompletedWordsByIds(wordIds: List<Long>): List<Word>
+
+    /**
      * 根据单词ID和学习日期获取学习记录
      * @param wordId 单词ID
      * @param studyDate 学习日期
@@ -100,4 +111,12 @@ interface StudyRecordDao {
      */
     @Query("SELECT * FROM study_records WHERE wordId = :wordId AND studyDate = :studyDate")
     suspend fun getStudyRecordByWordIdAndDate(wordId: Long, studyDate: Date): StudyRecord?
+    
+    /**
+     * 获取指定日期标记为已背的单词
+     * @param date 学习日期
+     * @return 指定日期标记为已背的单词列表
+     */
+    @Query("SELECT w.* FROM words w INNER JOIN study_records s ON w.id = s.wordId WHERE s.studyDate = :date AND s.isCompleted = 1 AND s.correctCount = 0 AND s.wrongCount = 0")
+    suspend fun getMemorizedWordsByDate(date: Date): List<Word>
 }

@@ -5,9 +5,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.DatePicker
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.button.MaterialButton
+import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import androidx.navigation.fragment.findNavController
@@ -56,7 +60,7 @@ class ReviewFragment : Fragment() {
         observeViewModel()
         // 默认显示本日已背诵的单词
         val today = viewModel.getTodayZeroed()
-        viewModel.loadWordsForDate(today)
+        viewModel.loadWordsForDate(today, requireContext())
         val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
         binding.textSelectedDate.text = dateFormat.format(today)
         binding.textSelectedDate.visibility = View.VISIBLE
@@ -81,26 +85,43 @@ class ReviewFragment : Fragment() {
     
     private fun showDatePicker() {
         val calendar = Calendar.getInstance()
-        val datePickerDialog = DatePickerDialog(
-            requireContext(),
-            { _, year, month, dayOfMonth ->
-                val selectedDate = Calendar.getInstance().apply {
-                    set(year, month, dayOfMonth, 0, 0, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }.time
-                
-                viewModel.loadWordsForDate(selectedDate)
-                
-                val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
-                binding.textSelectedDate.text = dateFormat.format(selectedDate)
-                binding.textSelectedDate.visibility = View.VISIBLE
-            },
+        
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_date_picker, null)
+        val datePicker = dialogView.findViewById<DatePicker>(R.id.date_picker)
+        val positiveButton = dialogView.findViewById<MaterialButton>(R.id.dialog_positive_button)
+        val negativeButton = dialogView.findViewById<MaterialButton>(R.id.dialog_negative_button)
+        
+        datePicker.init(
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
-        )
+        ) { _: DatePicker, _: Int, _: Int, _: Int ->
+            // 日期选择回调
+        }
         
-        datePickerDialog.show()
+        val dialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .create()
+        
+        positiveButton.setOnClickListener {
+            val selectedDate = Calendar.getInstance().apply {
+                set(datePicker.year, datePicker.month, datePicker.dayOfMonth, 0, 0, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.time
+            
+            viewModel.loadWordsForDate(selectedDate, requireContext())
+            
+            val dateFormat = SimpleDateFormat("MM月dd日", Locale.getDefault())
+            binding.textSelectedDate.text = dateFormat.format(selectedDate)
+            binding.textSelectedDate.visibility = View.VISIBLE
+            dialog.dismiss()
+        }
+        
+        negativeButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
     }
     
     private fun observeViewModel() {

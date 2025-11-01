@@ -39,6 +39,7 @@
     <string name="test_score">测试得分</string>
     <string name="correct_answer">正确答案</string>
     <string name="your_answer">你的答案</string>
+    <string name="tested_words_count">测试单词数: %1$d个</string>
     
     <!-- Settings Fragment -->
     <string name="daily_word_count">每日单词数量</string>
@@ -53,6 +54,10 @@
     <string name="data_already_initialized">单词已经初始化</string>
     <string name="daily_word_count_format">%1$d 个单词/天</string>
     <string name="today_words_title">今日单词</string>
+    <string name="min_word_count">1</string>
+    <string name="max_word_count">100</string>
+    <string name="data_initialization">数据初始化</string>
+    <string name="initialize_data">初始化数据</string>
     
     <!-- Review Fragment -->
     <string name="select_date">选择日期</string>
@@ -76,4 +81,21 @@
     <string name="service_error">服务异常</string>
     <string name="no_pronunciation">暂无发音</string>
     <string name="playback_failed">播放失败</string>
+    
+    <!-- Onboarding Activity -->
+    <string name="onboarding_title">欢迎使用「简约背诵」</string>
+    <string name="onboarding_subtitle">简约、纯粹的单词记忆</string>
+    <string name="onboarding_core_process">核心流程</string>
+    <string name="onboarding_process_1_title">学习自测</string>
+    <string name="onboarding_process_1_desc">点击卡片：翻转可隐藏中文，在心中默背。\n翻转后单词：将放入「测试」环节。</string>
+    <string name="onboarding_process_2_title">背诵标记</string>
+    <string name="onboarding_process_2_desc">主动标记： 对熟悉的单词，直接点击左下角 [已背] 快速跳过。\n测试标记： 在「测试」模块中答对单词，系统将 自动标记 为已背。</string>
+    <string name="onboarding_start_title">开始</string>
+    <string name="onboarding_start_desc">请选择 词库 和 每日数量。</string>
+    <string name="onboarding_word_bank">词库选择</string>
+    <string name="onboarding_daily_goal">每日数量</string>
+    <string name="onboarding_get_started">我知道了，开始学习</string>
+    <string name="daily_goal_10">10个</string>
+    <string name="daily_goal_30">30个</string>
+    <string name="daily_goal_50">50个</string>
 </resources>

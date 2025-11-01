@@ -74,6 +74,68 @@
 - **Gson**: JSON数据解析
 - **Lottie**: 动画效果（预留）
 
+## 核心组件详解
+
+本项目遵循Google推荐的MVVM架构模式，将代码逻辑清晰地分离到不同的组件中，以提高可维护性、可测试性和可扩展性。以下是项目中核心组件的详细说明：
+
+### Fragment (视图控制器)
+- **作用**: `Fragment` 是UI层的主要组成部分，负责管理和显示应用界面的特定部分。它承载着用户能看到的所有视觉元素，如按钮、文本、列表等。
+- **职责**:
+    - **UI渲染**: 将ViewModel提供的数据渲染到屏幕上。
+    - **用户交互**: 监听用户的操作（如点击、滑动），并将这些事件通知给`ViewModel`进行处理。
+    - **生命周期管理**: `Fragment`拥有自己的生命周期，能响应Android系统的生命周期事件，从而在正确的时机加载数据或释放资源。
+- **特点**:
+    - 它们是模块化的，可被复用在不同的`Activity`中。
+    - 不直接处理业务逻辑或数据获取，保持视图层的纯粹性。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/ui/` 下的各个功能模块包中，例如 `HomeFragment.kt`。
+
+### Entity (数据模型)
+- **作用**: `Entity` (或称Model) 是数据层的基石，用于定义应用需要持久化存储的数据结构。在本项目中，它们是Room数据库中的表结构映射。
+- **职责**:
+    - **数据结构定义**: 声明一个数据对象所包含的字段（如单词的英文、中文、音标等）。
+    - **数据库表映射**: 通过Room的注解（如`@Entity`, `@PrimaryKey`, `@ColumnInfo`），将一个Kotlin数据类（`data class`）映射成数据库中的一张表。
+- **特点**:
+    - 它们是纯粹的数据容器，不包含任何业务逻辑。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/data/entity/`，例如 `Word.kt`。
+
+### ViewModelFactory (视图模型工厂)
+- **作用**: `ViewModelFactory` 是一个用于创建`ViewModel`实例的工厂类。当`ViewModel`需要接收参数（如`Repository`）时，必须使用`ViewModelFactory`来实例化它。
+- **职责**:
+    - **依赖注入**: 将`ViewModel`所需的依赖（例如`WordRepository`）传递给`ViewModel`的构造函数。
+    - **实例化ViewModel**: 确保`ViewModel`在`Fragment`或`Activity`的生命周期内被正确创建和管理，避免在屏幕旋转等配置更改时丢失数据。
+- **特点**:
+    - 它是连接`ViewModel`和其依赖项的桥梁。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/ui/` 下的各个功能模块包中，例如 `HomeViewModelFactory.kt`。
+
+### Adapter (数据适配器)
+- **作用**: `Adapter` 是连接数据和UI列表（如`RecyclerView`）的桥梁。它负责将数据集合中的每一项数据转换成一个可以在列表中显示的视图项。
+- **职责**:
+    - **视图创建**: 为列表中的每个项目创建一个`ViewHolder`。
+    - **数据绑定**: 将特定位置的数据绑定到`ViewHolder`所持有的视图上。
+    - **高效更新**: 通过`DiffUtil`等机制，高效地更新列表内容，只刷新发生变化的部分，从而提高性能。
+- **特点**:
+    - 它是`RecyclerView`或`ViewPager2`等组件不可或缺的一部分。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/ui/` 下的各个功能模块包中，例如 `FavoriteWordAdapter.kt`。
+
+### DAO (数据访问对象)
+- **作用**: `DAO` (Data Access Object) 是数据访问层的核心接口，它定义了所有与数据库交互的操作。
+- **职责**:
+    - **数据库操作抽象**: 提供清晰的、类型安全的方法（如`insert`, `query`, `update`, `delete`）来操作数据库，而无需编写复杂的SQL语句。
+    - **SQL查询定义**: 使用Room的注解（如`@Query`, `@Insert`）将Kotlin/Java方法映射到具体的SQL查询。
+    - **返回响应式数据**: 可以返回`LiveData`或`Flow`，使UI能够自动响应数据库的变化。
+- **特点**:
+    - 它是`Repository`与`Database`之间的中间层。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/data/dao/`，例如 `WordDao.kt`。
+
+### Converter (类型转换器)
+- **作用**: `Converter` 用于在Room数据库存储和读取数据时，对不支持的自定义数据类型进行转换。Room本身只支持基本数据类型（如`String`, `Int`, `Long`等）。
+- **职责**:
+    - **对象到数据库类型的转换**: 将一个自定义对象（如`Date`）转换成Room可以存储的类型（如`Long`）。
+    - **数据库类型到对象的转换**: 将从数据库中读取的数据（如`Long`）转换回原始的自定义对象（如`Date`）。
+- **特点**:
+    - 通过`@TypeConverter`注解实现。
+- **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/data/converter/`，例如 `DateConverter.kt`。
+
 ## 📱 功能模块
 
 ### 1. 主页模块 (Home)

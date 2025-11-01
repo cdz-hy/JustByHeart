@@ -1,18 +1,24 @@
 package com.justbyheart.vocabulary.ui.home
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.justbyheart.vocabulary.R
 import com.justbyheart.vocabulary.data.database.VocabularyDatabase
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.FragmentHomeBinding
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -22,6 +28,23 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     
     private lateinit var viewModel: HomeViewModel
+    
+    // 添加广播接收器用于监听词库切换
+    private val wordBankChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            // 词库切换后刷新首页数据，使用异步方式避免阻塞UI线程
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    // 延迟一小段时间，确保词库切换完成
+                    delay(100)
+                    viewModel.loadTodayProgress(requireContext())
+                    viewModel.loadOverallProgress(requireContext())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,10 +72,20 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // 注册广播接收器 (适配Android 14)
+        val filter = IntentFilter("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 14及以上版本需要指定receiver flags
+            requireActivity().registerReceiver(wordBankChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            // Android 13及以下版本
+            requireActivity().registerReceiver(wordBankChangeReceiver, filter)
+        }
+        
         setupUI()
         observeViewModel()
-        viewModel.loadTodayProgress()
-        viewModel.loadOverallProgress()
+        viewModel.loadTodayProgress(requireContext())
+        viewModel.loadOverallProgress(requireContext())
     }
     
     private fun setupUI() {
@@ -122,6 +155,12 @@ class HomeFragment : Fragment() {
     
     override fun onDestroyView() {
         super.onDestroyView()
+        // 注销广播接收器
+        try {
+            requireActivity().unregisterReceiver(wordBankChangeReceiver)
+        } catch (e: IllegalArgumentException) {
+            // 接收器未注册，忽略异常
+        }
         _binding = null
     }
 }
