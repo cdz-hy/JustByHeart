@@ -583,7 +583,7 @@ view_word_statistics.xml
 
 ```xml
 <!-- 应用基本信息 -->
-<string name="app_name">雅思单词背诵</string>
+<string name="app_name">简约背诵</string>
 <string name="app_version">版本 %s</string>
 
 <!-- 页面标题 -->
@@ -658,7 +658,7 @@ view_word_statistics.xml
 ### 包结构
 
 ```
-com.ielts.vocabulary/
+com.justbyheart.vocabulary/
 ├── data/                          # 数据层
 │   ├── entity/                    # 数据实体
 │   ├── dao/                       # 数据访问对象
@@ -671,8 +671,11 @@ com.ielts.vocabulary/
 │   ├── test/                     # 测试模块
 │   ├── review/                   # 复习模块
 │   ├── favorites/                # 收藏模块
+│   ├── library/                  # 词库模块
+│   ├── search/                   # 搜索模块
 │   ├── settings/                 # 设置模块
-│   └── common/                   # 通用UI组件
+│   ├── worddisplay/              # 单词详情模块
+│   └── todaywords/               # 今日单词模块
 ├── utils/                        # 工具类
 │   ├── DateUtils.kt              # 日期工具
 │   ├── PreferenceUtils.kt        # 偏好设置工具

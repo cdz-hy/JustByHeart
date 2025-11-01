@@ -1,9 +1,9 @@
 # 项目概览
 
-## 📋 项目信息
+## 项目信息
 
-| 项目名称 | 雅思核心单词背诵应用 (IELTS Vocabulary App) |
-|---------|-------------------------------------------|
+| 项目名称 | 简约背诵 (JustByHeart) |
+|---------|-----------------------|
 | 版本 | 1.0.0 |
 | 开发语言 | Kotlin |
 | 最低Android版本 | Android 7.0 (API 24) |
@@ -12,15 +12,15 @@
 | 数据库 | Room Database |
 | UI框架 | Material Design 3 |
 
-## 🎯 项目目标
+## 项目目标
 
-创建一个专为雅思考生设计的单词背诵应用，帮助用户：
-- 系统化学习雅思核心词汇
+创建一个简洁高效的单词背诵应用，帮助用户：
+- 系统化学习各类英语词汇
 - 通过科学的记忆方法提高学习效率
 - 跟踪学习进度，建立良好的学习习惯
 - 提供个性化的学习体验
 
-## 🏗️ 技术架构
+## 技术架构
 
 ### 架构图
 
@@ -72,7 +72,6 @@
 
 #### 工具库
 - **Gson**: JSON数据解析
-- **Lottie**: 动画效果（预留）
 
 ## 核心组件详解
 
@@ -136,14 +135,14 @@
     - 通过`@TypeConverter`注解实现。
 - **文件位置**: `app/src/main/java/com/justbyheart/vocabulary/data/converter/`，例如 `DateConverter.kt`。
 
-## 📱 功能模块
+## 功能模块
 
 ### 1. 主页模块 (Home)
 **文件位置**: `ui/home/`
 
 **主要功能**:
 - 显示每日学习进度
-- 快速访问学习和复习功能
+- 快速访问学习、搜索、复习和词库功能
 - 学习目标设置入口
 
 **核心组件**:
@@ -158,6 +157,7 @@
 - 单词卡片式学习
 - 收藏重要单词
 - 学习进度跟踪
+- 单词翻转隐藏中文释义
 
 **核心组件**:
 - `StudyFragment`: 学习界面
@@ -171,6 +171,7 @@
 - 中英互译选择题
 - 即时答案反馈
 - 测试结果统计
+- 震动反馈
 
 **核心组件**:
 - `TestFragment`: 测试界面
@@ -183,6 +184,7 @@
 **主要功能**:
 - 按日期查看历史学习记录
 - 重新学习以往单词
+- 日期选择器
 
 **核心组件**:
 - `ReviewFragment`: 复习界面
@@ -201,19 +203,44 @@
 - `FavoritesViewModel`: 收藏逻辑
 - `FavoriteWordAdapter`: 收藏列表适配器
 
-### 6. 设置模块 (Settings)
+### 6. 词库模块 (Library)
+**文件位置**: `ui/library/`
+
+**主要功能**:
+- 查看所有未掌握和已掌握单词
+- 标签页切换未掌握/已掌握单词列表
+
+**核心组件**:
+- `LibraryFragment`: 词库界面
+- `LibraryViewModel`: 词库逻辑
+- `LibraryWordAdapter`: 单词列表适配器
+
+### 7. 搜索模块 (Search)
+**文件位置**: `ui/search/`
+
+**主要功能**:
+- 模糊搜索单词
+- 实时显示搜索结果
+
+**核心组件**:
+- `SearchFragment`: 搜索界面
+- `SearchViewModel`: 搜索逻辑
+- `WordSearchAdapter`: 搜索单词列表适配器
+
+### 8. 设置模块 (Settings)
 **文件位置**: `ui/settings/`
 
 **主要功能**:
 - 调整每日学习目标
-- 初始化单词数据
-- 应用配置管理
+- 切换词库
+- 数据导入/导出
+- 主题颜色切换
 
 **核心组件**:
 - `SettingsFragment`: 设置界面
 - `SettingsViewModel`: 设置逻辑
 
-## 🗄️ 数据模型
+## 数据模型
 
 ### 核心实体
 
@@ -227,15 +254,17 @@ data class Word(
     val definition: String?,         // 英文定义
     val example: String?,            // 例句
     val exampleTranslation: String?, // 例句翻译
-    val difficulty: Int,             // 难度等级(1-5)
-    val category: String             // 分类
+    val category: String,            // 分类
+    val synos: String?,              // 同义词
+    val phrases: String?,            // 短语
+    val relWord: String?,            // 同根词
+    val wordBank: String             // 词库来源类别
 )
 ```
 
 #### StudyRecord (学习记录)
 ```kotlin
 data class StudyRecord(
-    val id: Long,                    // 记录ID
     val wordId: Long,                // 关联单词ID
     val studyDate: Date,             // 学习日期
     val isCompleted: Boolean,        // 是否完成
@@ -257,11 +286,12 @@ data class FavoriteWord(
 #### DailyGoal (每日目标)
 ```kotlin
 data class DailyGoal(
-    val id: Long,                    // 目标ID
     val date: Date,                  // 目标日期
     val targetWordCount: Int,        // 目标单词数
     val completedWordCount: Int,     // 已完成数
-    val isCompleted: Boolean         // 是否完成
+    val isCompleted: Boolean,        // 是否完成
+    val dailyWordIds: String,        // 当日学习的单词ID列表
+    val flippedWordIds: String       // 当日已翻转的单词ID列表
 )
 ```
 
@@ -273,7 +303,7 @@ Word (1) ←→ (N) FavoriteWord
 Date (1) ←→ (1) DailyGoal
 ```
 
-## 🎨 UI设计规范
+## UI设计规范
 
 ### 设计原则
 - **简洁性**: 界面简洁，突出核心功能
@@ -293,7 +323,7 @@ Date (1) ←→ (1) DailyGoal
 - **正文**: 14sp, Regular
 - **说明**: 12sp, Regular
 
-## 📊 性能指标
+## 性能指标
 
 ### 应用性能
 - **启动时间**: < 2秒
@@ -306,7 +336,7 @@ Date (1) ←→ (1) DailyGoal
 - **批量插入**: < 500ms
 - **复杂查询**: < 200ms
 
-## 🧪 测试策略
+## 测试策略
 
 ### 测试层级
 1. **单元测试**: ViewModel、Repository、Utils
@@ -318,7 +348,7 @@ Date (1) ←→ (1) DailyGoal
 - **业务逻辑覆盖率**: > 90%
 - **关键路径覆盖率**: 100%
 
-## 🚀 部署流程
+## 部署流程
 
 ### 构建配置
 ```kotlin
@@ -344,21 +374,21 @@ buildTypes {
 - [ ] 版本号更新
 - [ ] 发布说明准备
 
-## 📈 项目指标
+## 项目指标
 
 ### 开发指标
-- **代码行数**: ~3000行
-- **文件数量**: ~50个
-- **模块数量**: 6个主要模块
-- **依赖库**: 15个主要依赖
+- **代码行数**: ~5000行
+- **文件数量**: ~80个
+- **模块数量**: 8个主要模块
+- **依赖库**: 20个主要依赖
 
 ### 功能指标
-- **支持单词数**: 1000+
+- **支持词库**: 7种（六级、四级、托福、雅思等）
 - **测试题型**: 2种（中译英、英译中）
 - **学习模式**: 卡片式学习
 - **数据存储**: 完全本地化
 
-## 🔮 未来规划
+## 未来规划
 
 ### 短期目标 (v1.1)
 - [ ] 添加单词发音功能
@@ -378,14 +408,14 @@ buildTypes {
 - [ ] 社交学习功能
 - [ ] 多语言支持
 
-## 📚 相关文档
+## 相关文档
 
 - [用户使用指南](USER_GUIDE.md)
 - [开发指南](DEVELOPMENT_GUIDE.md)
 - [API文档](API_DOCUMENTATION.md)
 - [代码规范](CODE_STYLE_GUIDE.md)
 
-## 👥 团队信息
+## 团队信息
 
 ### 开发团队
 - **项目负责人**: [姓名]
@@ -400,4 +430,4 @@ buildTypes {
 
 ---
 
-**感谢您对雅思单词背诵应用项目的关注！** 🎉
+**感谢您对简约背诵应用项目的关注！** 🎉

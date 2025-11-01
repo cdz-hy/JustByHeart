@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档描述了雅思单词背诵应用的内部API接口，包括数据访问层(DAO)、数据仓库(Repository)和业务逻辑层(ViewModel)的主要方法。
+本文档描述了简约背诵应用的内部API接口，包括数据访问层(DAO)、数据仓库(Repository)和业务逻辑层(ViewModel)的主要方法。
 
 ## 数据访问层 (DAO)
 
@@ -20,14 +20,17 @@ suspend fun getWordById(id: Long): Word?
 // 随机获取指定数量的单词
 suspend fun getRandomWords(count: Int): List<Word>
 
-// 根据难度获取随机单词
-suspend fun getRandomWordsByDifficulty(difficulty: Int, count: Int): List<Word>
+// 根据词库获取单词
+suspend fun getWordsByWordBank(wordBank: String): List<Word>
 
-// 根据分类获取随机单词
-suspend fun getRandomWordsByCategory(category: String, count: Int): List<Word>
+// 根据词库随机获取指定数量的单词
+suspend fun getRandomWordsByWordBank(wordBank: String, count: Int): List<Word>
 
 // 获取单词总数
 suspend fun getWordCount(): Int
+
+// 根据词库获取单词总数
+suspend fun getWordCountByWordBank(wordBank: String): Int
 ```
 
 #### 修改方法
@@ -44,6 +47,9 @@ suspend fun updateWord(word: Word)
 
 // 删除单词
 suspend fun deleteWord(word: Word)
+
+// 删除指定词库的所有单词
+suspend fun deleteWordsByWordBank(wordBank: String): Int
 ```
 
 ### StudyRecordDao - 学习记录数据访问
@@ -65,6 +71,12 @@ suspend fun getStudyRecordsBetweenDates(startDate: Date, endDate: Date): List<St
 
 // 获取指定日期的完成单词数
 suspend fun getCompletedWordsCountByDate(date: Date): Int
+
+// 获取指定日期已完成的单词
+suspend fun getCompletedWordsForDate(date: Date): List<Word>
+
+// 根据单词ID和学习日期获取学习记录
+suspend fun getStudyRecordByWordIdAndDate(wordId: Long, date: Date): StudyRecord?
 ```
 
 #### 修改方法
@@ -148,8 +160,17 @@ suspend fun getWordById(id: Long): Word?
 // 随机获取单词
 suspend fun getRandomWords(count: Int): List<Word>
 
+// 根据词库获取单词
+suspend fun getWordsByWordBank(wordBank: String): List<Word>
+
+// 根据词库随机获取单词
+suspend fun getRandomWordsByWordBank(wordBank: String, count: Int): List<Word>
+
 // 批量插入单词
 suspend fun insertWords(words: List<Word>)
+
+// 删除指定词库的所有单词
+suspend fun deleteWordsByWordBank(wordBank: String): Int
 ```
 
 #### 学习记录操作
@@ -166,6 +187,12 @@ suspend fun updateStudyRecord(studyRecord: StudyRecord)
 
 // 获取所有学习日期
 fun getAllStudyDates(): LiveData<List<Date>>
+
+// 获取指定日期已完成的单词
+suspend fun getCompletedWordsForDate(date: Date): List<Word>
+
+// 根据单词ID和学习日期获取学习记录
+suspend fun getStudyRecordByWordIdAndDate(wordId: Long, date: Date): StudyRecord?
 ```
 
 #### 收藏操作
@@ -175,13 +202,13 @@ fun getAllStudyDates(): LiveData<List<Date>>
 fun getFavoriteWords(): LiveData<List<Word>>
 
 // 添加到收藏
-suspend fun addToFavorites(wordId: Long)
+suspend fun insertFavoriteWord(favoriteWord: FavoriteWord): Long
 
 // 从收藏中移除
-suspend fun removeFromFavorites(wordId: Long)
+suspend fun deleteFavoriteWordByWordId(wordId: Long)
 
 // 检查是否已收藏
-suspend fun isFavorite(wordId: Long): Boolean
+suspend fun isWordFavorite(wordId: Long): Boolean
 ```
 
 #### 每日目标操作
@@ -198,6 +225,9 @@ suspend fun updateDailyGoal(dailyGoal: DailyGoal)
 
 // 获取最近的每日目标
 fun getRecentDailyGoals(): LiveData<List<DailyGoal>>
+
+// 创建或更新每日目标
+suspend fun createOrUpdateDailyGoal(targetCount: Int)
 ```
 
 ## 业务逻辑层 (ViewModel)
@@ -210,6 +240,9 @@ fun getRecentDailyGoals(): LiveData<List<DailyGoal>>
 // 每日学习进度
 val dailyProgress: LiveData<DailyProgress>
 
+// 总体学习进度
+val overallProgress: LiveData<Pair<Int, Int>>
+
 // 加载状态
 val isLoading: LiveData<Boolean>
 ```
@@ -218,7 +251,13 @@ val isLoading: LiveData<Boolean>
 
 ```kotlin
 // 加载今日进度
-fun loadTodayProgress()
+fun loadTodayProgress(context: Context)
+
+// 加载总体进度
+fun loadOverallProgress(context: Context)
+
+// 获取今日单词ID列表
+fun getTodayWordIds(callback: (LongArray?) -> Unit)
 ```
 
 ### StudyViewModel - 学习页面业务逻辑
@@ -232,6 +271,12 @@ val todayWords: LiveData<List<Word>>
 // 当前学习位置
 val currentPosition: LiveData<Int>
 
+// 收藏单词列表
+val favoriteWords: LiveData<List<Long>>
+
+// 翻转单词列表
+val flippedWords: LiveData<List<Long>>
+
 // 加载状态
 val isLoading: LiveData<Boolean>
 ```
@@ -240,7 +285,7 @@ val isLoading: LiveData<Boolean>
 
 ```kotlin
 // 加载今日单词
-fun loadTodayWords()
+fun loadTodayWords(context: Context)
 
 // 更新当前位置
 fun updateCurrentPosition(position: Int)
@@ -248,8 +293,17 @@ fun updateCurrentPosition(position: Int)
 // 切换收藏状态
 fun toggleFavorite(wordId: Long, isFavorite: Boolean)
 
-// 标记今日完成
-fun markTodayComplete()
+// 添加翻转单词
+fun addFlippedWord(wordId: Long)
+
+// 移除翻转单词
+fun removeFlippedWord(wordId: Long)
+
+// 获取指定日期已完成的单词ID列表
+suspend fun getCompletedWordIdsForDate(date: Date): List<Long>
+
+// 获取已背诵的单词
+suspend fun getMemorizedWordsByDate(date: Date): List<Word>
 ```
 
 ### TestViewModel - 测试页面业务逻辑
@@ -280,7 +334,7 @@ val isLoading: LiveData<Boolean>
 
 ```kotlin
 // 开始测试
-fun startTest()
+fun startTest(wordIds: LongArray)
 
 // 选择答案
 fun selectAnswer(answerIndex: Int)
@@ -305,8 +359,11 @@ data class Word(
     val definition: String? = null,      // 英文释义
     val example: String? = null,         // 例句
     val exampleTranslation: String? = null, // 例句翻译
-    val difficulty: Int = 1,             // 难度等级(1-5)
-    val category: String = "general"     // 分类
+    val category: String = "general",    // 分类
+    val synos: String? = null,           // 同义词
+    val phrases: String? = null,         // 短语
+    val relWord: String? = null,         // 同根词
+    val wordBank: String = "vocabulary"  // 词库来源类别
 )
 ```
 
@@ -314,7 +371,6 @@ data class Word(
 
 ```kotlin
 data class StudyRecord(
-    val id: Long = 0,                    // 记录ID
     val wordId: Long,                    // 单词ID
     val studyDate: Date,                 // 学习日期
     val isCompleted: Boolean = false,    // 是否完成
@@ -338,11 +394,12 @@ data class FavoriteWord(
 
 ```kotlin
 data class DailyGoal(
-    val id: Long = 0,                    // 目标ID
     val date: Date,                      // 目标日期
     val targetWordCount: Int = 10,       // 目标单词数
     val completedWordCount: Int = 0,     // 已完成单词数
-    val isCompleted: Boolean = false     // 是否完成
+    val isCompleted: Boolean = false,    // 是否完成
+    val dailyWordIds: String = "",       // 当日学习的单词ID列表
+    val flippedWordIds: String = ""      // 当日已翻转的单词ID列表
 )
 ```
 
@@ -353,18 +410,19 @@ data class DailyGoal(
 ```kotlin
 class StudyViewModel(private val repository: WordRepository) : ViewModel() {
     
-    fun loadTodayWords() {
+    fun loadTodayWords(context: Context) {
         viewModelScope.launch {
-            // 获取今日目标
-            val today = getTodayDate()
-            val dailyGoal = repository.getDailyGoalByDate(today)
-            val targetCount = dailyGoal?.targetWordCount ?: 10
+            // 获取设置参数
+            val sharedPreferences = context.getSharedPreferences("vocabulary_settings", Context.MODE_PRIVATE)
+            val dailyWordCount = sharedPreferences.getInt("daily_word_count", 10)
+            val currentWordBank = sharedPreferences.getString("current_word_bank", "六级核心") ?: "六级核心"
             
             // 获取随机单词
-            val words = repository.getRandomWords(targetCount)
+            val words = repository.getRandomWordsByWordBank(currentWordBank, dailyWordCount)
             _todayWords.value = words
             
             // 创建学习记录
+            val today = getTodayDate()
             words.forEach { word ->
                 val studyRecord = StudyRecord(
                     wordId = word.id,
@@ -383,12 +441,13 @@ class StudyViewModel(private val repository: WordRepository) : ViewModel() {
 ```kotlin
 // 添加到收藏
 viewModelScope.launch {
-    repository.addToFavorites(wordId)
+    val favoriteWord = FavoriteWord(wordId = wordId)
+    repository.insertFavoriteWord(favoriteWord)
 }
 
 // 检查收藏状态
 viewModelScope.launch {
-    val isFavorite = repository.isFavorite(wordId)
+    val isFavorite = repository.isWordFavorite(wordId)
     // 更新UI状态
 }
 
@@ -401,7 +460,8 @@ repository.getFavoriteWords().observe(this) { favoriteWords ->
 ### 3. 生成测试题目
 
 ```kotlin
-private suspend fun generateQuestions(words: List<Word>): List<TestQuestion> {
+private suspend fun generateQuestions(wordIds: LongArray): List<TestQuestion> {
+    val words = repository.getWordsByIds(wordIds.toList())
     val allWords = repository.getRandomWords(20) // 获取干扰项
     
     return words.map { targetWord ->
@@ -452,7 +512,7 @@ try {
 val words = repository.getRandomWords(count)
 if (words.isEmpty()) {
     // 处理空数据情况
-    _error.value = "没有可用的单词数据，请先初始化单词库"
+    _error.value = "没有可用的单词数据，请先初始化词库"
     return
 }
 ```

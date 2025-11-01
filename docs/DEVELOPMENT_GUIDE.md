@@ -15,12 +15,12 @@
 ### 必需工具
 
 1. **Android Studio**
-   - 版本：Arctic Fox (2020.3.1) 或更高
+   - 版本：最新稳定版
    - 下载地址：https://developer.android.com/studio
 
 2. **Java Development Kit (JDK)**
-   - 版本：JDK 8 或更高
-   - 推荐使用 JDK 11
+   - 版本：JDK 11 或更高
+   - 推荐使用 JDK 17
 
 3. **Android SDK**
    - 最低API级别：24 (Android 7.0)
@@ -28,7 +28,7 @@
    - 编译SDK版本：34
 
 4. **Kotlin**
-   - 版本：1.8.0 或更高
+   - 版本：1.9.0 或更高
    - 已集成在Android Studio中
 
 ### 环境配置
@@ -36,7 +36,7 @@
 1. **克隆项目**
    ```bash
    git clone [项目地址]
-   cd ielts-vocabulary-app
+   cd JustByHeart
    ```
 
 2. **导入项目**
@@ -69,7 +69,7 @@
 ### 目录结构详解
 
 ```
-app/src/main/java/com/ielts/vocabulary/
+app/src/main/java/com/justbyheart/vocabulary/
 ├── data/                          # 数据层
 │   ├── entity/                    # 数据实体类
 │   │   ├── Word.kt               # 单词实体
@@ -89,21 +89,15 @@ app/src/main/java/com/ielts/vocabulary/
 │       └── DateConverter.kt      # 日期转换器
 ├── ui/                           # UI层
 │   ├── home/                     # 主页模块
-│   │   ├── HomeFragment.kt       # 主页Fragment
-│   │   ├── HomeViewModel.kt      # 主页ViewModel
-│   │   └── HomeViewModelFactory.kt # ViewModel工厂
 │   ├── study/                    # 学习模块
-│   │   ├── StudyFragment.kt      # 学习Fragment
-│   │   ├── StudyViewModel.kt     # 学习ViewModel
-│   │   ├── StudyViewModelFactory.kt
-│   │   └── WordPagerAdapter.kt   # 单词卡片适配器
 │   ├── test/                     # 测试模块
-│   │   ├── TestFragment.kt       # 测试Fragment
-│   │   ├── TestViewModel.kt      # 测试ViewModel
-│   │   └── TestViewModelFactory.kt
 │   ├── review/                   # 复习模块
 │   ├── favorites/                # 收藏模块
-│   └── settings/                 # 设置模块
+│   ├── library/                  # 词库模块
+│   ├── search/                   # 搜索模块
+│   ├── settings/                 # 设置模块
+│   ├── worddisplay/              # 单词详情模块
+│   └── todaywords/               # 今日单词模块
 ├── utils/                        # 工具类
 │   └── WordDataLoader.kt         # 单词数据加载器
 ├── MainActivity.kt               # 主Activity
@@ -158,11 +152,11 @@ app/src/main/java/com/ielts/vocabulary/
     */
    
    // 包声明
-   package com.ielts.vocabulary.data.repository
+   package com.justbyheart.vocabulary.data.repository
    
    // 导入语句（按字母顺序排列）
    import androidx.lifecycle.LiveData
-   import com.ielts.vocabulary.data.dao.WordDao
+   import com.justbyheart.vocabulary.data.dao.WordDao
    
    // 类定义
    class WordRepository(
@@ -230,7 +224,7 @@ app/src/main/java/com/ielts/vocabulary/
 
 2. **字符串资源**
    ```xml
-   <string name="app_name">雅思单词背诵</string>
+   <string name="app_name">简约背诵</string>
    <string name="title_home">首页</string>
    <string name="button_start_study">开始学习</string>
    ```
