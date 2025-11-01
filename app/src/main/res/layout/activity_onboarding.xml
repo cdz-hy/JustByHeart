@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/button_get_started"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- 标题 -->
+            <TextView
+                android:id="@+id/text_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_title"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:layout_marginTop="32dp"
+                android:textColor="?attr/colorOnSurface" />
+
+            <!-- 理念 -->
+            <TextView
+                android:id="@+id/text_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_subtitle"
+                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                android:textAlignment="center"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <!-- 核心流程 -->
+            <TextView
+                android:id="@+id/text_process_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_core_process"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold"
+                android:layout_marginTop="32dp"
+                android:textColor="?attr/colorPrimary" />
+
+            <!-- 流程1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/onboarding_process_1_title"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/onboarding_process_1_desc"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 流程2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/onboarding_process_2_title"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/onboarding_process_2_desc"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 开始 -->
+            <TextView
+                android:id="@+id/text_start_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_start_title"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold"
+                android:layout_marginTop="32dp"
+                android:textColor="?attr/colorPrimary" />
+
+            <TextView
+                android:id="@+id/text_start_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_start_desc"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/colorOnSurface" />
+
+            <!-- 词库选择 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_word_bank"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:layout_marginTop="24dp"
+                android:textColor="?attr/colorOnSurface" />
+
+            <ListView
+                android:id="@+id/list_word_banks"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/card_background"
+                android:padding="8dp"
+                android:choiceMode="singleChoice"
+                android:scrollbars="vertical"
+                android:nestedScrollingEnabled="true" />
+
+            <!-- 每日数量选择 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/onboarding_daily_goal"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:layout_marginTop="16dp"
+                android:textColor="?attr/colorOnSurface" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggle_group_daily_goal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_10"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/daily_goal_10" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_30"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/daily_goal_30" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_50"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/daily_goal_50" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_get_started"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_margin="24dp"
+        android:text="@string/onboarding_get_started"
+        android:textSize="16sp"
+        app:cornerRadius="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

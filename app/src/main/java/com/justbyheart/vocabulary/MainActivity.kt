@@ -1,7 +1,16 @@
 package com.justbyheart.vocabulary
 
 import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +19,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.justbyheart.vocabulary.data.repository.WordRepository
 import com.justbyheart.vocabulary.databinding.ActivityMainBinding
 import com.justbyheart.vocabulary.utils.WordDataLoader
@@ -82,80 +93,6 @@ class MainActivity : AppCompatActivity() {
         // 监听导航目的地变化，动态启用/禁用回调
         navController.addOnDestinationChangedListener { _, destination, _ ->
             onBackPressedCallback.isEnabled = destination.id in rootDestinations
-        }
-        
-
-        val isDataInitialized = sharedPreferences.getBoolean("data_initialized", false)
-        
-        if (!isDataInitialized) {
-            showInitialWordBankSelection()
-        }
-    }
-    
-    /**
-     * 显示初始词库选择对话框
-     */
-    private fun showInitialWordBankSelection() {
-        val wordBanks = WordDataLoader.getAvailableWordBanks().toTypedArray()
-        var selectedIndex = 0
-
-        AlertDialog.Builder(this)
-            .setTitle("选择词库")
-            .setSingleChoiceItems(wordBanks, selectedIndex) { _, which ->
-                selectedIndex = which
-            }
-            .setPositiveButton("确定") { _, _ ->
-                val selectedWordBank = wordBanks[selectedIndex]
-                initializeWordBankData(selectedWordBank)
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    /**
-     * 初始化词库数据
-     */
-    private fun initializeWordBankData(wordBank: String) {
-        lifecycleScope.launch {
-            try {
-                val repository = getRepository()
-                
-                // 获取词库对应的文件名
-                val fileNames = WordDataLoader.getWordBankFileNames(wordBank)
-
-                // 加载所有相关文件的单词
-                val allWords = mutableListOf<com.justbyheart.vocabulary.data.entity.Word>()
-                for (fileName in fileNames) {
-                    val words = WordDataLoader.loadWordsFromAssets(this@MainActivity, fileName)
-                    allWords.addAll(words)
-                }
-
-                // 保存到数据库
-                repository.insertWords(allWords)
-
-                // 保存当前词库设置
-                val sharedPreferences = getSharedPreferences("vocabulary_settings", MODE_PRIVATE)
-                sharedPreferences.edit()
-                    .putString("current_word_bank", wordBank)
-                    .putBoolean("data_initialized", true)
-                    .apply()
-
-                Toast.makeText(this@MainActivity, "词库初始化完成", Toast.LENGTH_SHORT).show()
-                
-                // 发送广播通知首页刷新数据
-                val intent = android.content.Intent("com.justbyheart.vocabulary.WORD_BANK_CHANGED")
-                sendBroadcast(intent)
-            } catch (e: Exception) {
-                // 出错时显示错误信息并重新选择
-                AlertDialog.Builder(this@MainActivity)
-                    .setTitle("初始化失败")
-                    .setMessage("词库初始化失败: ${e.message}")
-                    .setPositiveButton("重试") { _, _ ->
-                        showInitialWordBankSelection()
-                    }
-                    .setCancelable(false)
-                    .show()
-            }
         }
     }
     

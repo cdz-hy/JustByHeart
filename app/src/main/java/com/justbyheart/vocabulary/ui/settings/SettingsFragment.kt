@@ -1,8 +1,6 @@
 package com.justbyheart.vocabulary.ui.settings
 
-import android.app.Activity
-import android.app.AlertDialog
-import android.content.Context
+import android.app.Activity import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
@@ -11,13 +9,19 @@ import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -201,17 +205,48 @@ class SettingsFragment : Fragment() {
         val currentWordBank = sharedPreferences.getString(KEY_CURRENT_WORD_BANK, DEFAULT_WORD_BANK) ?: DEFAULT_WORD_BANK
         val selectedIndex = wordBanks.indexOf(currentWordBank)
         
-        AlertDialog.Builder(requireContext())
-            .setTitle("选择词库")
-            .setSingleChoiceItems(wordBanks, selectedIndex) { dialog, which ->
-                val selectedWordBank = wordBanks[which]
-                if (selectedWordBank != currentWordBank) {
-                    switchWordBank(selectedWordBank)
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_word_bank_selection, null)
+        val listView = dialogView.findViewById<ListView>(R.id.list_word_banks)
+        val titleText = dialogView.findViewById<TextView>(R.id.dialog_title)
+        val cancelButton: MaterialButton = dialogView.findViewById(R.id.dialog_negative_button)
+        
+        titleText.text = "选择词库"
+        
+        val adapter = object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_single_choice, wordBanks) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                if (view is TextView) {
+                    view.setTextColor(requireContext().getColor(R.color.md_theme_light_onSurface))
+                    view.textSize = 16f
+                    view.setPadding(16, 32, 16, 32)
                 }
-                dialog.dismiss()
+                return view
             }
-            .setNegativeButton("取消", null)
-            .show()
+        }
+        
+        listView.adapter = adapter
+        listView.choiceMode = ListView.CHOICE_MODE_SINGLE
+        if (selectedIndex >= 0) {
+            listView.setItemChecked(selectedIndex, true)
+        }
+        
+        val dialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .create()
+        
+        listView.onItemClickListener = AdapterView.OnItemClickListener { _: AdapterView<*>, _: View, position: Int, _: Long ->
+            val selectedWordBank = wordBanks[position]
+            if (selectedWordBank != currentWordBank) {
+                switchWordBank(selectedWordBank)
+            }
+            dialog.dismiss()
+        }
+        
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
     }
     
     /**
@@ -311,20 +346,45 @@ class SettingsFragment : Fragment() {
      * @param toWordBank 目标词库
      */
     private fun showDataMigrationDialog(fromWordBank: String, toWordBank: String) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("数据迁移")
-            .setMessage("是否将当前词库($fromWordBank)的背诵和收藏记录迁移到新词库($toWordBank)？")
-            .setPositiveButton("迁移背诵记录") { _, _ ->
-                migrateStudyRecords(fromWordBank, toWordBank)
-            }
-            .setNegativeButton("迁移收藏记录") { _, _ ->
-                migrateFavoriteWords(fromWordBank, toWordBank)
-            }
-            .setNeutralButton("全部迁移") { _, _ ->
-                migrateStudyRecords(fromWordBank, toWordBank)
-                migrateFavoriteWords(fromWordBank, toWordBank)
-            }
-            .show()
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_custom, null)
+        val titleText = dialogView.findViewById<TextView>(R.id.dialog_title)
+        val messageText = dialogView.findViewById<TextView>(R.id.dialog_message)
+        val positiveButton: MaterialButton = dialogView.findViewById(R.id.dialog_positive_button)
+        val negativeButton: MaterialButton = dialogView.findViewById(R.id.dialog_negative_button)
+        val neutralButton: MaterialButton = dialogView.findViewById(R.id.dialog_neutral_button)
+        
+        titleText.text = "数据迁移"
+        messageText.text = "是否将当前词库($fromWordBank)的背诵和收藏记录迁移到新词库($toWordBank)？"
+        
+        positiveButton.text = "迁移背诵记录"
+        negativeButton.text = "迁移收藏记录"
+        neutralButton.text = "全部迁移"
+        
+        // 设置全部迁移按钮为主要按钮样式
+        neutralButton.setBackgroundColor(requireContext().getColor(R.color.md_theme_light_primary))
+        neutralButton.setTextColor(requireContext().getColor(R.color.md_theme_light_onPrimary))
+        
+        val dialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .create()
+        
+        positiveButton.setOnClickListener {
+            migrateStudyRecords(fromWordBank, toWordBank)
+            dialog.dismiss()
+        }
+        
+        negativeButton.setOnClickListener {
+            migrateFavoriteWords(fromWordBank, toWordBank)
+            dialog.dismiss()
+        }
+        
+        neutralButton.setOnClickListener {
+            migrateStudyRecords(fromWordBank, toWordBank)
+            migrateFavoriteWords(fromWordBank, toWordBank)
+            dialog.dismiss()
+        }
+        
+        dialog.show()
     }
     
     /**
