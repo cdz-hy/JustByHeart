@@ -1,5 +1,7 @@
 # 简约背诵 (JustByHeart)
 
+[English Version](README_en.md)
+
 ## 项目简介
 
 这是一款用于辅助英文单词背诵的Android应用程序，简称"简背"。它基于程序内置的多个单词库帮助用户进行高效的单词学习和复习。采用现代化的Material Design 3设计语言，提供简洁高效的单词背诵体验。

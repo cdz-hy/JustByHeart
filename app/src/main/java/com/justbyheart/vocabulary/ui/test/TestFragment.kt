@@ -234,14 +234,20 @@ class TestFragment : Fragment() {
     }
     
     private fun vibrateDevice(pattern: LongArray, repeat: Int) {
-        vibrator?.let { v ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val vibrationEffect = VibrationEffect.createWaveform(pattern, repeat)
-                v.vibrate(vibrationEffect)
-            } else {
-                @Suppress("DEPRECATION")
-                v.vibrate(pattern, repeat)
+        try {
+            vibrator?.let { v ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val vibrationEffect = VibrationEffect.createWaveform(pattern, repeat)
+                    v.vibrate(vibrationEffect)
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(pattern, repeat)
+                }
             }
+        } catch (e: SecurityException) {
+            // 忽略震动权限不足的情况
+        } catch (e: Exception) {
+            // 忽略其他可能的震动异常
         }
     }
     
